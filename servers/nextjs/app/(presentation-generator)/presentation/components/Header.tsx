@@ -38,6 +38,8 @@ import ToolTip from "@/components/ToolTip";
 import { clearPresentationData } from "@/store/slices/presentationGeneration";
 import { clearHistory } from "@/store/slices/undoRedoSlice";
 import { useTenantNavigation } from "@/app/tenant-provider";
+import { sanitizeFilename } from "../../utils/others";
+import { getHeader } from "../../services/api/header";
 
 const Header = ({
   presentation_id,
@@ -83,13 +85,24 @@ const Header = ({
         throw new Error("Failed to get presentation PPTX model");
       }
       trackEvent(MixpanelEvent.Header_ExportAsPPTX_API_Call);
-      const pptx_path = await PresentationGenerationApi.exportAsPPTX(pptx_model);
-      if (pptx_path) {
-        // window.open(pptx_path, '_self');
-        downloadLink(pptx_path);
-      } else {
-        throw new Error("No path returned from export");
+      const pptxUrl = appendTenantParam(
+        `/api/v1/ppt/presentation/export/pptx?presentation_id=${presentation_id}`
+      );
+      const response = await fetch(pptxUrl, {
+        method: 'POST',
+        headers: getHeader(),
+        body: JSON.stringify(pptx_model),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to export PPTX");
       }
+
+      const blob = await response.blob();
+      const filename =
+        getFilenameFromResponse(response) ||
+        `${sanitizeFilename(presentationData?.title || "presentation") || "presentation"}.pptx`;
+      triggerBlobDownload(blob, filename);
     } catch (error) {
       console.error("Export failed:", error);
       setShowLoader(false);
@@ -113,21 +126,24 @@ const Header = ({
       await PresentationGenerationApi.updatePresentationContent(presentationData);
 
       trackEvent(MixpanelEvent.Header_ExportAsPDF_API_Call);
-      const response = await fetch(appendTenantParam('/api/export-as-pdf'), {
-        method: 'POST',
-        body: JSON.stringify({
-          id: presentation_id,
-          title: presentationData?.title,
-        })
-      });
+      const sanitizedTitle = sanitizeFilename(
+        presentationData?.title || "presentation"
+      );
+      const pdfUrl = appendTenantParam(
+        `/api/export-as-pdf?id=${presentation_id}&title=${encodeURIComponent(
+          sanitizedTitle || "presentation"
+        )}`
+      );
+      const response = await fetch(pdfUrl, { method: 'GET' });
 
-      if (response.ok) {
-        const { path: pdfPath } = await response.json();
-        // window.open(pdfPath, '_blank');
-        downloadLink(pdfPath);
-      } else {
+      if (!response.ok) {
         throw new Error("Failed to export PDF");
       }
+
+      const blob = await response.blob();
+      const filename =
+        getFilenameFromResponse(response) || `${sanitizedTitle || "presentation"}.pdf`;
+      triggerBlobDownload(blob, filename);
 
     } catch (err) {
       console.error(err);
@@ -145,18 +161,23 @@ const Header = ({
     trackEvent(MixpanelEvent.Header_ReGenerate_Button_Clicked, { pathname });
     pushWithTenant(`/presentation?id=${presentation_id}&stream=true`);
   };
-  const downloadLink = (path: string) => {
-    const tenantAwarePath = appendTenantParam(path);
-    // if we have popup access give direct download if not redirect to the path
-    if (window.opener) {
-      window.open(tenantAwarePath, '_blank');
-    } else {
-      const link = document.createElement('a');
-      link.href = tenantAwarePath;
-      link.download = tenantAwarePath.split('/').pop() || 'download';
-      document.body.appendChild(link);
-      link.click();
-    }
+
+  const getFilenameFromResponse = (response: Response) => {
+    const disposition = response.headers.get("Content-Disposition");
+    if (!disposition) return null;
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    return match?.[1] || null;
+  };
+
+  const triggerBlobDownload = (blob: Blob, filename: string) => {
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(link);
   };
 
   const ExportOptions = ({ mobile }: { mobile: boolean }) => (
