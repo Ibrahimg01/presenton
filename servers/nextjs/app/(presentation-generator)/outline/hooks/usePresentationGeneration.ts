@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { clearPresentationData } from "@/store/slices/presentationGeneration";
 import { PresentationGenerationApi } from "../../services/api/presentation-generation";
 import { Template, LoadingState, TABS } from "../types/index";
 import { MixpanelEvent, trackEvent } from "@/utils/mixpanel";
+import { useTenantNavigation } from "@/app/tenant-provider";
 
 const DEFAULT_LOADING_STATE: LoadingState = {
   message: "",
@@ -21,7 +21,7 @@ export const usePresentationGeneration = (
   setActiveTab: (tab: string) => void
 ) => {
   const dispatch = useDispatch();
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const [loadingState, setLoadingState] = useState<LoadingState>(DEFAULT_LOADING_STATE);
 
   const validateInputs = useCallback(() => {
@@ -86,7 +86,7 @@ export const usePresentationGeneration = (
 
       if (response) {
         dispatch(clearPresentationData());
-        router.replace(`/presentation?id=${presentationId}&stream=true`);
+        pushWithTenant(`/presentation?id=${presentationId}&stream=true`);
       }
     } catch (error: any) {
       console.error('Error In Presentation Generation(prepare).', error);
@@ -96,7 +96,7 @@ export const usePresentationGeneration = (
     } finally {
       setLoadingState(DEFAULT_LOADING_STATE);
     }
-  }, [validateInputs, prepareLayoutData, presentationId, outlines, dispatch, router, selectedTemplate]);
+  }, [validateInputs, prepareLayoutData, presentationId, outlines, dispatch, pushWithTenant, selectedTemplate]);
 
   return { loadingState, handleSubmit };
 }; 
