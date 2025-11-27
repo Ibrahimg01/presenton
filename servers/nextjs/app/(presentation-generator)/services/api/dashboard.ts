@@ -47,16 +47,19 @@ export class DashboardApi {
     }
   }
   
-  static async getPresentation(id: string) {
+  static async getPresentation(id: string, tenantId?: string | null) {
     try {
       const response = await fetch(
-        appendTenantToUrl(`/api/v1/ppt/presentation/${id}`),
+        appendTenantToUrl(`/api/v1/ppt/presentation/${id}`, tenantId),
         {
           method: "GET",
         }
       );
-      
-      return await ApiResponseHandler.handleResponse(response, "Presentation not found");
+
+      return await ApiResponseHandler.handleResponse(
+        response,
+        "Presentation not found"
+      );
     } catch (error) {
       console.error("Error fetching presentation:", error);
       throw error;

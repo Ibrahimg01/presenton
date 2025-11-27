@@ -16,7 +16,7 @@ from fastapi import (
     Path,
     Query,
 )
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -40,6 +40,7 @@ from models.presentation_with_slides import (
 )
 from models.sql.template import TemplateModel
 
+from pathvalidate import sanitize_filename
 from services.documents_loader import DocumentsLoader
 from services.webhook_service import WebhookService
 from utils.get_layout_by_name import get_layout_by_name
@@ -433,22 +434,39 @@ async def update_presentation(
     )
 
 
-@PRESENTATION_ROUTER.post("/export/pptx", response_model=str)
+@PRESENTATION_ROUTER.post("/export/pptx", response_class=FileResponse)
 async def export_presentation_as_pptx(
     pptx_model: Annotated[PptxPresentationModel, Body()],
+    presentation_id: Annotated[uuid.UUID, Query(alias="presentation_id")],
+    tenant: Annotated[Optional[str], Query(alias="tenant")] = None,
+    sql_session: AsyncSession = Depends(get_async_session),
 ):
+    presentation = await sql_session.get(PresentationModel, presentation_id)
+    if not presentation:
+        raise HTTPException(status_code=404, detail="Presentation not found")
+
+    if tenant != "all":
+        if not tenant or presentation.tenant_id != tenant:
+            raise HTTPException(status_code=403, detail="Access denied")
+
     temp_dir = TEMP_FILE_SERVICE.create_temp_dir()
 
     pptx_creator = PptxPresentationCreator(pptx_model, temp_dir)
     await pptx_creator.create_ppt()
 
     export_directory = get_exports_directory()
-    pptx_path = os.path.join(
-        export_directory, f"{pptx_model.name or uuid.uuid4()}.pptx"
+    os.makedirs(export_directory, exist_ok=True)
+    safe_title = sanitize_filename(
+        presentation.title or pptx_model.name or str(uuid.uuid4())
     )
+    pptx_path = os.path.join(export_directory, f"{safe_title}.pptx")
     pptx_creator.save(pptx_path)
 
-    return pptx_path
+    return FileResponse(
+        pptx_path,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        filename=f"{safe_title}.pptx",
+    )
 
 
 @PRESENTATION_ROUTER.post("/export", response_model=PresentationPathAndEditPath)
@@ -469,10 +487,12 @@ async def export_presentation_as_pptx_or_pdf(
         if not tenant or presentation.tenant_id != tenant:
             raise HTTPException(status_code=403, detail="Access denied")
 
+    tenant_for_export = presentation.tenant_id if tenant == "all" else tenant
     presentation_and_path = await export_presentation(
         id,
         presentation.title or str(uuid.uuid4()),
         export_as,
+        tenant_for_export,
     )
 
     return PresentationPathAndEditPath(
@@ -785,7 +805,10 @@ async def generate_presentation_handler(
 
         # 9. Export
         presentation_and_path = await export_presentation(
-            presentation_id, presentation.title or str(uuid.uuid4()), request.export_as
+            presentation_id,
+            presentation.title or str(uuid.uuid4()),
+            request.export_as,
+            presentation.tenant_id,
         )
 
         response = PresentationPathAndEditPath(
@@ -939,7 +962,10 @@ async def edit_presentation_with_new_content(
     await sql_session.commit()
 
     presentation_and_path = await export_presentation(
-        presentation.id, presentation.title or str(uuid.uuid4()), data.export_as
+        presentation.id,
+        presentation.title or str(uuid.uuid4()),
+        data.export_as,
+        presentation.tenant_id,
     )
 
     return PresentationPathAndEditPath(
@@ -979,7 +1005,10 @@ async def derive_presentation_from_existing_one(
     await sql_session.commit()
 
     presentation_and_path = await export_presentation(
-        new_presentation.id, new_presentation.title or str(uuid.uuid4()), data.export_as
+        new_presentation.id,
+        new_presentation.title or str(uuid.uuid4()),
+        data.export_as,
+        new_presentation.tenant_id,
     )
 
     return PresentationPathAndEditPath(

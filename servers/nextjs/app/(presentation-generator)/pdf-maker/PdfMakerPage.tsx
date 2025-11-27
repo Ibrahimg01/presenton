@@ -18,7 +18,13 @@ import { useTemplateLayouts } from "../hooks/useTemplateLayouts";
 
 
 
-const PresentationPage = ({ presentation_id }: { presentation_id: string }) => {
+const PresentationPage = ({
+  presentation_id,
+  tenantId,
+}: {
+  presentation_id: string;
+  tenantId?: string | null;
+}) => {
   const { renderSlideContent, loading } = useTemplateLayouts();
   const pathname = usePathname();
   const [contentLoading, setContentLoading] = useState(true);
@@ -52,12 +58,12 @@ const PresentationPage = ({ presentation_id }: { presentation_id: string }) => {
   // Function to fetch the slides
   useEffect(() => {
     fetchUserSlides();
-  }, []);
+  }, [presentation_id, tenantId]);
 
   // Function to fetch the user slides
   const fetchUserSlides = async () => {
     try {
-      const data = await DashboardApi.getPresentation(presentation_id);
+      const data = await DashboardApi.getPresentation(presentation_id, tenantId);
       dispatch(setPresentationData(data));
       setContentLoading(false);
     } catch (error) {

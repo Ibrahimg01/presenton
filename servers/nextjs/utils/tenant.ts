@@ -16,11 +16,17 @@ export const clearTenantIdFromStorage = () => {
   localStorage.removeItem(TENANT_STORAGE_KEY);
 };
 
+export const getTenantIdFromUrl = (): string | null => {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get(TENANT_QUERY_KEY);
+};
+
 export const appendTenantToUrl = (
   url: string,
   tenantId?: string | null
 ): string => {
-  const tenant = tenantId ?? getTenantIdFromStorage();
+  const tenant = tenantId ?? getTenantIdFromUrl() ?? getTenantIdFromStorage();
 
   if (!tenant) return url;
 

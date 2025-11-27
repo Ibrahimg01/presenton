@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const id = await getPresentationId(request);
-    [browser, page] = await getBrowserAndPage(id);
+    const tenant = getTenantId(request);
+    [browser, page] = await getBrowserAndPage(id, tenant);
     const screenshotsDir = getScreenshotsDir();
 
     const { slides, speakerNotes } = await getSlidesAndSpeakerNotes(page);
@@ -75,7 +76,15 @@ async function getPresentationId(request: NextRequest) {
   return id;
 }
 
-async function getBrowserAndPage(id: string): Promise<[Browser, Page]> {
+function getTenantId(request: NextRequest) {
+  const tenant = request.nextUrl.searchParams.get("tenant");
+  if (!tenant) {
+    throw new ApiError("Tenant ID not found");
+  }
+  return tenant;
+}
+
+async function getBrowserAndPage(id: string, tenant: string): Promise<[Browser, Page]> {
   const browser = await puppeteer.launch({
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
     headless: true,
@@ -98,7 +107,8 @@ async function getBrowserAndPage(id: string): Promise<[Browser, Page]> {
   await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
   page.setDefaultNavigationTimeout(300000);
   page.setDefaultTimeout(300000);
-  await page.goto(`http://localhost/pdf-maker?id=${id}`, {
+  const tenantQuery = tenant ? `&tenant=${encodeURIComponent(tenant)}` : "";
+  await page.goto(`http://localhost/pdf-maker?id=${id}${tenantQuery}`, {
     waitUntil: "networkidle0",
     timeout: 300000,
   });

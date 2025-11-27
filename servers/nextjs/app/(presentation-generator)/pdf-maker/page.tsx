@@ -10,6 +10,7 @@ const page = () => {
     const { pushWithTenant } = useTenantNavigation();
     const params = useSearchParams();
     const queryId = params.get("id");
+    const tenant = params.get("tenant");
     if (!queryId) {
         return (
             <div className="flex flex-col items-center justify-center h-screen">
@@ -20,7 +21,7 @@ const page = () => {
         );
     }
     return (
-        <PdfMakerPage presentation_id={queryId} />
+        <PdfMakerPage presentation_id={queryId} tenantId={tenant} />
     );
 };
 export default page;

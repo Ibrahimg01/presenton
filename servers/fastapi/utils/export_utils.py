@@ -1,7 +1,7 @@
 import json
 import os
 import aiohttp
-from typing import Literal
+from typing import Literal, Optional
 import uuid
 from fastapi import HTTPException
 from pathvalidate import sanitize_filename
@@ -11,18 +11,25 @@ from models.presentation_and_path import PresentationAndPath
 from services.pptx_presentation_creator import PptxPresentationCreator
 from services.temp_file_service import TEMP_FILE_SERVICE
 from utils.asset_directory_utils import get_exports_directory
-import uuid
 
 
 async def export_presentation(
-    presentation_id: uuid.UUID, title: str, export_as: Literal["pptx", "pdf"]
+    presentation_id: uuid.UUID,
+    title: str,
+    export_as: Literal["pptx", "pdf"],
+    tenant: Optional[str] = None,
 ) -> PresentationAndPath:
+    if not tenant:
+        raise HTTPException(status_code=400, detail="Tenant ID is required")
+
+    sanitized_title = sanitize_filename(title or str(uuid.uuid4()))
+
     if export_as == "pptx":
 
         # Get the converted PPTX model from the Next.js service
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"http://localhost/api/presentation_to_pptx_model?id={presentation_id}"
+                f"http://localhost/api/presentation_to_pptx_model?id={presentation_id}&tenant={tenant}"
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
@@ -40,9 +47,10 @@ async def export_presentation(
         await pptx_creator.create_ppt()
 
         export_directory = get_exports_directory()
+        os.makedirs(export_directory, exist_ok=True)
         pptx_path = os.path.join(
             export_directory,
-            f"{sanitize_filename(title or str(uuid.uuid4()))}.pptx",
+            f"{sanitized_title}.pptx",
         )
         pptx_creator.save(pptx_path)
 
@@ -53,15 +61,29 @@ async def export_presentation(
     else:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                "http://localhost/api/export-as-pdf",
+                f"http://localhost/api/export-as-pdf?tenant={tenant}",
                 json={
                     "id": str(presentation_id),
-                    "title": sanitize_filename(title or str(uuid.uuid4())),
+                    "title": sanitized_title,
                 },
             ) as response:
-                response_json = await response.json()
+                if response.status != 200:
+                    error_text = await response.text()
+                    print(f"Failed to export PDF: {error_text}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Failed to export presentation as PDF",
+                    )
+
+                pdf_buffer = await response.read()
+
+        export_directory = get_exports_directory()
+        os.makedirs(export_directory, exist_ok=True)
+        pdf_path = os.path.join(export_directory, f"{sanitized_title}.pdf")
+        with open(pdf_path, "wb") as f:
+            f.write(pdf_buffer)
 
         return PresentationAndPath(
             presentation_id=presentation_id,
-            path=response_json["path"],
+            path=pdf_path,
         )
