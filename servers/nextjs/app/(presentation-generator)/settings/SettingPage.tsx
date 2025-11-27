@@ -147,7 +147,7 @@ const SettingsPage = () => {
     if (!canChangeKeys) {
       pushWithTenant("/dashboard");
     }
-  }, [canChangeKeys, router]);
+  }, [canChangeKeys]);
 
   if (!canChangeKeys) {
     return null;
