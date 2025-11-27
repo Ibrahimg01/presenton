@@ -18,6 +18,9 @@ class PresentationModel(SQLModel, table=True):
     n_slides: int
     language: str
     title: Optional[str] = None
+    tenant_id: Optional[str] = Field(
+        default=None, sa_column=Column(String, index=True)
+    )
     file_paths: Optional[List[str]] = Field(sa_column=Column(JSON), default=None)
     outlines: Optional[dict] = Field(sa_column=Column(JSON), default=None)
     created_at: datetime = Field(
@@ -49,6 +52,7 @@ class PresentationModel(SQLModel, table=True):
             n_slides=self.n_slides,
             language=self.language,
             title=self.title,
+            tenant_id=self.tenant_id,
             file_paths=self.file_paths,
             outlines=self.outlines,
             layout=self.layout,

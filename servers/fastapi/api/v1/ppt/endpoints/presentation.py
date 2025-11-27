@@ -7,7 +7,15 @@ import random
 import traceback
 from typing import Annotated, List, Literal, Optional, Tuple
 import dirtyjson
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Depends,
+    HTTPException,
+    Path,
+    Query,
+)
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -72,8 +80,12 @@ PRESENTATION_ROUTER = APIRouter(prefix="/presentation", tags=["Presentation"])
 
 
 @PRESENTATION_ROUTER.get("/all", response_model=List[PresentationWithSlides])
-async def get_all_presentations(sql_session: AsyncSession = Depends(get_async_session)):
-    presentations_with_slides = []
+async def get_all_presentations(
+    tenant: Annotated[Optional[str], Query(alias="tenant")] = None,
+    sql_session: AsyncSession = Depends(get_async_session),
+):
+    if tenant is None:
+        return []
 
     query = (
         select(PresentationModel, SlideModel)
@@ -83,6 +95,9 @@ async def get_all_presentations(sql_session: AsyncSession = Depends(get_async_se
         )
         .order_by(PresentationModel.created_at.desc())
     )
+
+    if tenant != "all":
+        query = query.where(PresentationModel.tenant_id == tenant)
 
     results = await sql_session.execute(query)
     rows = results.all()
@@ -98,11 +113,17 @@ async def get_all_presentations(sql_session: AsyncSession = Depends(get_async_se
 
 @PRESENTATION_ROUTER.get("/{id}", response_model=PresentationWithSlides)
 async def get_presentation(
-    id: uuid.UUID, sql_session: AsyncSession = Depends(get_async_session)
+    id: uuid.UUID,
+    tenant: Annotated[Optional[str], Query(alias="tenant")] = None,
+    sql_session: AsyncSession = Depends(get_async_session),
 ):
     presentation = await sql_session.get(PresentationModel, id)
     if not presentation:
         raise HTTPException(404, "Presentation not found")
+
+    if tenant != "all":
+        if not tenant or presentation.tenant_id != tenant:
+            raise HTTPException(status_code=403, detail="Access denied")
     slides = await sql_session.scalars(
         select(SlideModel)
         .where(SlideModel.presentation == id)
@@ -116,11 +137,17 @@ async def get_presentation(
 
 @PRESENTATION_ROUTER.delete("/{id}", status_code=204)
 async def delete_presentation(
-    id: uuid.UUID, sql_session: AsyncSession = Depends(get_async_session)
+    id: uuid.UUID,
+    tenant: Annotated[Optional[str], Query(alias="tenant")] = None,
+    sql_session: AsyncSession = Depends(get_async_session),
 ):
     presentation = await sql_session.get(PresentationModel, id)
     if not presentation:
         raise HTTPException(404, "Presentation not found")
+
+    if tenant != "all":
+        if not tenant or presentation.tenant_id != tenant:
+            raise HTTPException(status_code=403, detail="Access denied")
 
     await sql_session.delete(presentation)
     await sql_session.commit()
@@ -138,6 +165,7 @@ async def create_presentation(
     include_table_of_contents: Annotated[bool, Body()] = False,
     include_title_slide: Annotated[bool, Body()] = True,
     web_search: Annotated[bool, Body()] = False,
+    tenant: Annotated[Optional[str], Query(alias="tenant")] = None,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
 
@@ -147,6 +175,9 @@ async def create_presentation(
             detail="Number of slides cannot be less than 3 if table of contents is included",
         )
 
+    if tenant is None:
+        raise HTTPException(status_code=400, detail="Tenant ID is required")
+
     presentation_id = uuid.uuid4()
 
     presentation = PresentationModel(
@@ -154,6 +185,7 @@ async def create_presentation(
         content=content,
         n_slides=n_slides,
         language=language,
+        tenant_id=tenant,
         file_paths=file_paths,
         tone=tone.value,
         verbosity=verbosity.value,
@@ -425,12 +457,17 @@ async def export_presentation_as_pptx_or_pdf(
     export_as: Annotated[
         Literal["pptx", "pdf"], Body(description="Format to export the presentation as")
     ] = "pptx",
+    tenant: Annotated[Optional[str], Query(alias="tenant")] = None,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
     presentation = await sql_session.get(PresentationModel, id)
 
     if not presentation:
         raise HTTPException(status_code=404, detail="Presentation not found")
+
+    if tenant != "all":
+        if not tenant or presentation.tenant_id != tenant:
+            raise HTTPException(status_code=403, detail="Access denied")
 
     presentation_and_path = await export_presentation(
         id,
