@@ -61,7 +61,9 @@ const Header = ({
   const { onUndo, onRedo, canUndo, canRedo } = usePresentationUndoRedo();
 
   const get_presentation_pptx_model = async (id: string): Promise<PptxPresentationModel> => {
-    const response = await fetch(`/api/presentation_to_pptx_model?id=${id}`);
+    const response = await fetch(
+      appendTenantParam(`/api/presentation_to_pptx_model?id=${id}`)
+    );
     const pptx_model = await response.json();
     return pptx_model;
   };
@@ -111,7 +113,7 @@ const Header = ({
       await PresentationGenerationApi.updatePresentationContent(presentationData);
 
       trackEvent(MixpanelEvent.Header_ExportAsPDF_API_Call);
-      const response = await fetch('/api/export-as-pdf', {
+      const response = await fetch(appendTenantParam('/api/export-as-pdf'), {
         method: 'POST',
         body: JSON.stringify({
           id: presentation_id,
@@ -144,13 +146,14 @@ const Header = ({
     pushWithTenant(`/presentation?id=${presentation_id}&stream=true`);
   };
   const downloadLink = (path: string) => {
+    const tenantAwarePath = appendTenantParam(path);
     // if we have popup access give direct download if not redirect to the path
     if (window.opener) {
-      window.open(path, '_blank');
+      window.open(tenantAwarePath, '_blank');
     } else {
       const link = document.createElement('a');
-      link.href = path;
-      link.download = path.split('/').pop() || 'download';
+      link.href = tenantAwarePath;
+      link.download = tenantAwarePath.split('/').pop() || 'download';
       document.body.appendChild(link);
       link.click();
     }
