@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import Wrapper from "@/components/Wrapper";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -37,6 +37,7 @@ import { usePresentationUndoRedo } from "../hooks/PresentationUndoRedo";
 import ToolTip from "@/components/ToolTip";
 import { clearPresentationData } from "@/store/slices/presentationGeneration";
 import { clearHistory } from "@/store/slices/undoRedoSlice";
+import { useTenantNavigation } from "@/app/tenant-provider";
 
 const Header = ({
   presentation_id,
@@ -47,7 +48,7 @@ const Header = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const pathname = usePathname();
   const dispatch = useDispatch();
 
@@ -139,7 +140,7 @@ const Header = ({
     dispatch(clearPresentationData());
     dispatch(clearHistory())
     trackEvent(MixpanelEvent.Header_ReGenerate_Button_Clicked, { pathname });
-    router.push(`/presentation?id=${presentation_id}&stream=true`);
+    pushWithTenant(`/presentation?id=${presentation_id}&stream=true`);
   };
   const downloadLink = (path: string) => {
     // if we have popup access give direct download if not redirect to the path
@@ -216,7 +217,7 @@ const Header = ({
         onClick={() => {
           const to = `?id=${presentation_id}&mode=present&slide=${currentSlide || 0}`;
           trackEvent(MixpanelEvent.Navigation, { from: pathname, to });
-          router.push(to);
+          pushWithTenant(to);
         }}
         variant="ghost"
         className="border border-white font-bold text-white rounded-[32px] transition-all duration-300 group"

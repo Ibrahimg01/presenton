@@ -3,16 +3,18 @@
 import { useEffect, useState } from 'react';
 import { setCanChangeKeys, setLLMConfig } from '@/store/slices/userConfig';
 import { hasValidLLMConfig } from '@/utils/storeHelpers';
-import { usePathname, useRouter } from 'next/navigation';
+import { appendTenantToUrl } from '@/utils/tenant';
+import { usePathname } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { checkIfSelectedOllamaModelIsPulled } from '@/utils/providerUtils';
 import { LLMConfig } from '@/types/llm_config';
+import { useTenantNavigation } from './tenant-provider';
 
 export function ConfigurationInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
 
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const route = usePathname();
 
   // Fetch user config state
@@ -48,7 +50,7 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
         if (llmConfig.LLM === 'ollama') {
           const isPulled = await checkIfSelectedOllamaModelIsPulled(llmConfig.OLLAMA_MODEL);
           if (!isPulled) {
-            router.push('/');
+            pushWithTenant('/');
             setLoadingToFalseAfterNavigatingTo('/');
             return;
           }
@@ -56,26 +58,26 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
         if (llmConfig.LLM === 'custom') {
           const isAvailable = await checkIfSelectedCustomModelIsAvailable(llmConfig);
           if (!isAvailable) {
-            router.push('/');
+            pushWithTenant('/');
             setLoadingToFalseAfterNavigatingTo('/');
             return;
           }
         }
         if (route === '/') {
-          router.push('/upload');
+          pushWithTenant('/upload');
           setLoadingToFalseAfterNavigatingTo('/upload');
         } else {
           setIsLoading(false);
         }
       } else if (route !== '/') {
-        router.push('/');
+        pushWithTenant('/');
         setLoadingToFalseAfterNavigatingTo('/');
       } else {
         setIsLoading(false);
       }
     } else {
       if (route === '/') {
-        router.push('/upload');
+        pushWithTenant('/upload');
         setLoadingToFalseAfterNavigatingTo('/upload');
       } else {
         setIsLoading(false);
@@ -86,7 +88,7 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
 
   const checkIfSelectedCustomModelIsAvailable = async (llmConfig: LLMConfig) => {
     try {
-      const response = await fetch('/api/v1/ppt/openai/models/available', {
+      const response = await fetch(appendTenantToUrl('/api/v1/ppt/openai/models/available'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

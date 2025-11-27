@@ -10,7 +10,8 @@ import { useFileUpload } from "./hooks/useFileUpload";
 import { useSlideProcessing } from "./hooks/useSlideProcessing";
 import { useLayoutSaving } from "./hooks/useLayoutSaving";
 import { useAPIKeyCheck } from "./hooks/useAPIKeyCheck";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useTenantNavigation } from "@/app/tenant-provider";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { FileUploadSection } from "./components/FileUploadSection";
 import { SaveLayoutButton } from "./components/SaveLayoutButton";
@@ -20,7 +21,7 @@ import { APIKeyWarning } from "./components/APIKeyWarning";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 
 const CustomTemplatePage = () => {
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const pathname = usePathname();
   const { refetch } = useLayout();
   
@@ -47,7 +48,7 @@ const CustomTemplatePage = () => {
     trackEvent(MixpanelEvent.CustomTemplate_Save_Templates_API_Call);
     const id = await saveLayout(layoutName, description);
     if (id) {
-      router.push(`/template-preview/custom-${id}`);
+      pushWithTenant(`/template-preview/custom-${id}`);
     }
     return id;
   };

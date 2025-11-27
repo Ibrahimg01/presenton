@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Switch } from "./ui/switch";
+import { appendTenantToUrl } from "@/utils/tenant";
 
 interface AnthropicConfigProps {
   anthropicApiKey: string;
@@ -53,7 +54,7 @@ export default function AnthropicConfig({
 
     setModelsLoading(true);
     try {
-      const response = await fetch('/api/v1/ppt/anthropic/models/available', {
+      const response = await fetch(appendTenantToUrl('/api/v1/ppt/anthropic/models/available'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

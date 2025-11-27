@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import html2canvas from "html2canvas";
 import { ProcessedSlide } from "../types";
+import { appendTenantToUrl } from "@/utils/tenant";
 
 export const useSlideEdit = (
   slide: ProcessedSlide,
@@ -142,7 +143,7 @@ export const useSlideEdit = (
       formData.append("html", currentHtml);
       formData.append("prompt", prompt);
 
-      const response = await fetch("/api/v1/ppt/html-edit/", {
+      const response = await fetch(appendTenantToUrl("/api/v1/ppt/html-edit/"), {
         method: "POST",
         body: formData,
       });

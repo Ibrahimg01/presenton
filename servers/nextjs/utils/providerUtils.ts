@@ -1,4 +1,5 @@
 import { LLMConfig } from "@/types/llm_config";
+import { appendTenantToUrl } from "./tenant";
 
 export interface OllamaModel {
   label: string;
@@ -81,7 +82,7 @@ export const changeProvider = (
 
 export const checkIfSelectedOllamaModelIsPulled = async (ollamaModel: string) => {
   try {
-    const response = await fetch('/api/v1/ppt/ollama/models/available');
+    const response = await fetch(appendTenantToUrl('/api/v1/ppt/ollama/models/available'));
     const models = await response.json();
     const pulledModels = models.map((model: any) => model.name);
     return pulledModels.includes(ollamaModel);
@@ -115,7 +116,7 @@ export const pullOllamaModel = async (
     const interval = setInterval(async () => {
       try {
         const response = await fetch(
-          `/api/v1/ppt/ollama/model/pull?model=${model}`
+          appendTenantToUrl(`/api/v1/ppt/ollama/model/pull?model=${model}`)
         );
         if (response.status === 200) {
           const data = await response.json();

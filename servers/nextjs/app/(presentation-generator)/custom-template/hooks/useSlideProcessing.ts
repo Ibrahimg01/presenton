@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { ApiResponseHandler } from "@/app/(presentation-generator)/services/api/api-error-handler";
 import { ProcessedSlide, SlideData, FontData } from "../types";
+import { appendTenantToUrl } from "@/utils/tenant";
 
 export const useSlideProcessing = (
   selectedFile: File | null,
@@ -27,7 +28,7 @@ export const useSlideProcessing = (
       );
 
       try {
-        const htmlResponse = await fetch("/api/v1/ppt/slide-to-html/", {
+        const htmlResponse = await fetch(appendTenantToUrl("/api/v1/ppt/slide-to-html/"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -133,7 +134,7 @@ export const useSlideProcessing = (
       let slidesResponseData: any = null;
       if (isPdf) {
         formData.append("pdf_file", selectedFile);
-        const pdfResponse = await fetch("/api/v1/ppt/pdf-slides/process", {
+        const pdfResponse = await fetch(appendTenantToUrl("/api/v1/ppt/pdf-slides/process"), {
           method: "POST",
           body: formData,
         });
@@ -143,7 +144,7 @@ export const useSlideProcessing = (
         );
       } else if (isPptx) {
         formData.append("pptx_file", selectedFile);
-        const pptxResponse = await fetch("/api/v1/ppt/pptx-slides/process", {
+        const pptxResponse = await fetch(appendTenantToUrl("/api/v1/ppt/pptx-slides/process"), {
           method: "POST",
           body: formData,
         });

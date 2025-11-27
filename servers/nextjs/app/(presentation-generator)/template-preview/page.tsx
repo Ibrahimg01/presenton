@@ -9,6 +9,8 @@ import { useLayout } from "../context/LayoutContext";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import { getHeader } from "../services/api/header";
 import { toast } from "sonner";
+import { useTenantNavigation } from "@/app/tenant-provider";
+import { appendTenantToUrl } from "@/utils/tenant";
 
 const LayoutPreview = () => {
   const {
@@ -20,6 +22,7 @@ const LayoutPreview = () => {
     error,
   } = useLayout();
   const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const pathname = usePathname();
 
   const [summaryMap, setSummaryMap] = useState<Record<string, { lastUpdatedAt?: number; name?: string; description?: string }>>({});
@@ -38,7 +41,7 @@ const LayoutPreview = () => {
 
   useEffect(() => {
     // Fetch summary to map custom template slug to template meta and last updated time
-    fetch(`/api/v1/ppt/template-management/summary`, {
+    fetch(appendTenantToUrl(`/api/v1/ppt/template-management/summary`), {
       headers: getHeader(),
     })
       .then((res) => res.json())
@@ -111,7 +114,7 @@ const LayoutPreview = () => {
               <h2 className="text-xl font-semibold text-gray-900">Custom AI Templates</h2>
               <button className="text-sm text-gray-800 hover:text-blue-600 transition-colors flex items-center gap-2 group" onClick={() => {
                 trackEvent(MixpanelEvent.Navigation, { from: pathname, to: `/custom-template` });
-                router.push(`/custom-template`)
+                pushWithTenant(`/custom-template`)
               }}>
                 Create Custom Template
               </button>
@@ -130,7 +133,7 @@ const LayoutPreview = () => {
                       className="cursor-pointer hover:shadow-md transition-all duration-200 group"
                       onClick={() => {
                         trackEvent(MixpanelEvent.Navigation, { from: pathname, to: `/template-preview/${template.templateID}` });
-                        router.push(`/template-preview/${template.templateID}`)
+                        pushWithTenant(`/template-preview/${template.templateID}`)
                       }}
                     >
                       <div className="p-6">
@@ -187,7 +190,7 @@ const LayoutPreview = () => {
                   className="cursor-pointer hover:shadow-md transition-all border-blue-500 duration-200 group"
                   onClick={() => {
                     trackEvent(MixpanelEvent.Navigation, { from: pathname, to: `/custom-template` });
-                    router.push(`/custom-template`)
+                    pushWithTenant(`/custom-template`)
                   }}
                 >
                   <div className="p-6">
@@ -226,7 +229,7 @@ const LayoutPreview = () => {
                     className="cursor-pointer hover:shadow-md transition-all duration-200 group"
                     onClick={() => {
                       trackEvent(MixpanelEvent.Navigation, { from: pathname, to: `/template-preview/${template.templateID}` });
-                      router.push(`/template-preview/${template.templateID}`)
+                      pushWithTenant(`/template-preview/${template.templateID}`)
                     }}
                   >
                     <div className="p-6">

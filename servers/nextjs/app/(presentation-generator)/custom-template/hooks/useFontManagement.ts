@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { UploadedFont, FontData } from "../types";
+import { appendTenantToUrl } from "@/utils/tenant";
 
 export const useFontManagement = () => {
   const [UploadedFonts, setUploadedFonts] = useState<UploadedFont[]>([]);
@@ -82,7 +83,7 @@ export const useFontManagement = () => {
         const formData = new FormData();
         formData.append("font_file", file);
 
-        const response = await fetch("/api/v1/ppt/fonts/upload", {
+        const response = await fetch(appendTenantToUrl("/api/v1/ppt/fonts/upload"), {
           method: "POST",
           body: formData,
         });

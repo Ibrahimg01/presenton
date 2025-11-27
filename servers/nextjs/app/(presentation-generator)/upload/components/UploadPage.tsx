@@ -11,7 +11,8 @@
 
 "use client";
 import React, { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useTenantNavigation } from "@/app/tenant-provider";
 import { useDispatch } from "react-redux";
 import { clearOutlines, setPresentationId } from "@/store/slices/presentationGeneration";
 import { ConfigurationSelects } from "./ConfigurationSelects";
@@ -37,7 +38,7 @@ interface LoadingState {
 }
 
 const UploadPage = () => {
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const pathname = usePathname();
   const dispatch = useDispatch();
 
@@ -141,7 +142,7 @@ const UploadPage = () => {
     }));
     dispatch(clearOutlines())
     trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/documents-preview" });
-    router.push("/documents-preview");
+    pushWithTenant("/documents-preview");
   };
 
   /**
@@ -174,7 +175,7 @@ const UploadPage = () => {
     dispatch(setPresentationId(createResponse.id));
     dispatch(clearOutlines())
     trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/outline" });
-    router.push("/outline");
+    pushWithTenant("/outline");
   };
 
   /**

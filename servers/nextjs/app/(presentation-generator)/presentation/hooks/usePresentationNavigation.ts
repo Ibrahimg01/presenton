@@ -1,5 +1,6 @@
 import { useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTenantNavigation } from "@/app/tenant-provider";
 
 export const usePresentationNavigation = (
   presentationId: string,
@@ -7,7 +8,7 @@ export const usePresentationNavigation = (
   setSelectedSlide: (slide: number) => void,
   setIsFullscreen: (fullscreen: boolean) => void
 ) => {
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const searchParams = useSearchParams();
 
   const isPresentMode = searchParams.get("mode") === "present";
@@ -39,18 +40,18 @@ export const usePresentationNavigation = (
 
   const handlePresentExit = useCallback(() => {
     setIsFullscreen(false);
-    router.push(`/presentation?id=${presentationId}`);
-  }, [router, presentationId, setIsFullscreen]);
+    pushWithTenant(`/presentation?id=${presentationId}`);
+  }, [pushWithTenant, presentationId, setIsFullscreen]);
 
   const handleSlideChange = useCallback((newSlide: number, presentationData: any) => {
     if (newSlide >= 0 && newSlide < presentationData?.slides.length!) {
       setSelectedSlide(newSlide);
-      router.push(
+      pushWithTenant(
         `/presentation?id=${presentationId}&mode=present&slide=${newSlide}`,
         { scroll: false }
       );
     }
-  }, [router, presentationId, setSelectedSlide]);
+  }, [pushWithTenant, presentationId, setSelectedSlide]);
 
   return {
     isPresentMode,

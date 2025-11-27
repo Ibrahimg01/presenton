@@ -2,6 +2,7 @@ import {
   getHeader,
 } from "@/app/(presentation-generator)/services/api/header";
 import { ApiResponseHandler } from "@/app/(presentation-generator)/services/api/api-error-handler";
+import { appendTenantToUrl } from "@/utils/tenant";
 
 export interface PresentationResponse {
   id: string;
@@ -27,7 +28,7 @@ export class DashboardApi {
   static async getPresentations(): Promise<PresentationResponse[]> {
     try {
       const response = await fetch(
-        `/api/v1/ppt/presentation/all`,
+        appendTenantToUrl(`/api/v1/ppt/presentation/all`),
         {
           method: "GET",
         }
@@ -49,7 +50,7 @@ export class DashboardApi {
   static async getPresentation(id: string) {
     try {
       const response = await fetch(
-        `/api/v1/ppt/presentation/${id}`,
+        appendTenantToUrl(`/api/v1/ppt/presentation/${id}`),
         {
           method: "GET",
         }
@@ -65,7 +66,7 @@ export class DashboardApi {
   static async deletePresentation(presentation_id: string) {
     try {
       const response = await fetch(
-        `/api/v1/ppt/presentation/${presentation_id}`,
+        appendTenantToUrl(`/api/v1/ppt/presentation/${presentation_id}`),
         {
           method: "DELETE",
           headers: getHeader(),

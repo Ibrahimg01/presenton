@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, Save } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useTenantNavigation } from "@/app/tenant-provider";
 
 interface SaveLayoutModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export const SaveLayoutModal: React.FC<SaveLayoutModalProps> = ({
   onSave,
   isSaving,
 }) => {
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const [layoutName, setLayoutName] = useState("");
   const [description, setDescription] = useState("");
 
@@ -38,7 +38,7 @@ export const SaveLayoutModal: React.FC<SaveLayoutModalProps> = ({
     const id = await onSave(layoutName.trim(), description.trim());
     if (id) {
       // Redirect to the new template preview page
-      router.push(`/template-preview/custom-${id}`);
+      pushWithTenant(`/template-preview/custom-${id}`);
     }
     // Reset form after navigation decision
     setLayoutName("");

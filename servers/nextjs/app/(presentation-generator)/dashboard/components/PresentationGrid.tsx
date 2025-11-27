@@ -1,7 +1,7 @@
 import React from "react";
 import { PresentationCard } from "./PresentationCard";
 import { PlusIcon } from "@radix-ui/react-icons";
-import { useRouter } from "next/navigation";
+import { useTenantNavigation } from "@/app/tenant-provider";
 import { PresentationResponse } from "@/app/(presentation-generator)/services/api/dashboard";
 
 interface PresentationGridProps {
@@ -19,12 +19,12 @@ export const PresentationGrid = ({
   error = null,
   onPresentationDeleted,
 }: PresentationGridProps) => {
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const handleCreateNewPresentation = () => {
     if (type === "slide") {
-      router.push("/upload");
+      pushWithTenant("/upload");
     } else {
-      router.push("/editor");
+      pushWithTenant("/editor");
     }
   };
 

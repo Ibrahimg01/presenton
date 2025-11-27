@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { useRouter } from "next/navigation";
+import { useTenantNavigation } from "@/app/tenant-provider";
 import { toast } from "sonner";
 import { useTemplateLayouts } from "@/app/(presentation-generator)/hooks/useTemplateLayouts";
 
@@ -25,14 +25,14 @@ export const PresentationCard = ({
   slide: any;
   onDeleted?: (presentationId: string) => void;
 }) => {
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const { renderSlideContent } = useTemplateLayouts();
 
 
 
   const handlePreview = (e: React.MouseEvent) => {
     e.preventDefault();
-    router.push(`/presentation?id=${id}`);
+    pushWithTenant(`/presentation?id=${id}`);
   };
 
   const handleDelete = async (e: React.MouseEvent) => {

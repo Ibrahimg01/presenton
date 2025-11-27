@@ -9,7 +9,8 @@ import {
   checkIfSelectedOllamaModelIsPulled,
   pullOllamaModel,
 } from "@/utils/providerUtils";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useTenantNavigation } from "@/app/tenant-provider";
 import LLMProviderSelection from "@/components/LLMSelection";
 import Header from "../dashboard/components/Header";
 import { LLMConfig } from "@/types/llm_config";
@@ -26,7 +27,7 @@ interface ButtonState {
 }
 
 const SettingsPage = () => {
-  const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const pathname = usePathname();
   const userConfigState = useSelector((state: RootState) => state.userConfig);
   const [llmConfig, setLlmConfig] = useState<LLMConfig>(
@@ -92,7 +93,7 @@ const SettingsPage = () => {
         text: "Save Configuration",
       }));
       trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/upload" });
-      router.push("/upload");
+      pushWithTenant("/upload");
     } catch (error) {
       toast.info(error instanceof Error ? error.message : "Failed to save configuration");
       setButtonState(prev => ({
@@ -144,7 +145,7 @@ const SettingsPage = () => {
 
   useEffect(() => {
     if (!canChangeKeys) {
-      router.push("/dashboard");
+      pushWithTenant("/dashboard");
     }
   }, [canChangeKeys, router]);
 
