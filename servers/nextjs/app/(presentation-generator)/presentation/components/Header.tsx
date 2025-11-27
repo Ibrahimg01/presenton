@@ -48,7 +48,8 @@ const Header = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
-  const { pushWithTenant } = useTenantNavigation();
+  const { pushWithTenant, appendTenantParam } = useTenantNavigation();
+  const dashboardHref = appendTenantParam("/dashboard");
   const pathname = usePathname();
   const dispatch = useDispatch();
 
@@ -265,7 +266,7 @@ const Header = ({
 
         <Announcement />
         <Wrapper className="flex items-center justify-between py-1">
-          <Link href="/dashboard" className="min-w-[162px]">
+          <Link href={dashboardHref} className="min-w-[162px]">
             <img
               className="h-16"
               src="/logo.png"

@@ -8,15 +8,20 @@ import { usePathname } from "next/navigation";
 import HeaderNav from "@/app/(presentation-generator)/components/HeaderNab";
 import { Layout, FilePlus2 } from "lucide-react";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
+import { useTenantContext } from "@/app/tenant-provider";
 const Header = () => {
   const pathname = usePathname();
+  const { appendTenantParam } = useTenantContext();
+  const dashboardHref = appendTenantParam("/dashboard");
+  const customTemplateHref = appendTenantParam("/custom-template");
+  const templatePreviewHref = appendTenantParam("/template-preview");
   return (
     <div className="bg-[#5146E5] w-full shadow-lg sticky top-0 z-50">
       <Wrapper>
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-3">
             {(pathname !== "/upload" && pathname !== "/dashboard") && <BackBtn />}
-            <Link href="/dashboard" onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/dashboard" })}>
+            <Link href={dashboardHref} onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: dashboardHref })}>
               <img
                 src="/logo.png"
                 alt="Digital Launchpad"
@@ -26,9 +31,9 @@ const Header = () => {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/custom-template"
+              href={customTemplateHref}
               prefetch={false}
-              onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/custom-template" })}
+              onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: customTemplateHref })}
               className="flex items-center gap-2 px-3 py-2 text-white hover:bg-primary/80 rounded-md transition-colors outline-none"
               role="menuitem"
             >
@@ -36,9 +41,9 @@ const Header = () => {
               <span className="text-sm font-medium font-inter">Create Template</span>
             </Link>
             <Link
-              href="/template-preview"
+              href={templatePreviewHref}
               prefetch={false}
-              onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/template-preview" })}
+              onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: templatePreviewHref })}
               className="flex items-center gap-2 px-3 py-2 text-white hover:bg-primary/80 rounded-md transition-colors outline-none"
               role="menuitem"
             >

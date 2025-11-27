@@ -1,8 +1,11 @@
+"use client";
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useTenantContext } from './tenant-provider';
 
 const NotFound = () => {
+    const { appendTenantParam } = useTenantContext();
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-center p-6">
             <div className="max-w-lg mx-auto bg-white shadow-md rounded-lg p-8">
@@ -19,12 +22,12 @@ const NotFound = () => {
                 </p>
 
                 <div className="flex justify-center space-x-4 mb-8">
-                    <Link href="/dashboard">
+                    <Link href={appendTenantParam("/dashboard")}>
                         <Button className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
                             Go to Homepage
                         </Button>
                     </Link>
-                    <Link href="/contact">
+                    <Link href={appendTenantParam("/contact")}>
                         <Button className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700">
                             Contact Support
                         </Button>
