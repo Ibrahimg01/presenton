@@ -6,6 +6,7 @@ import TemplateLayouts from "./TemplateLayouts";
 import { Template } from "../types/index";
 
 import { getHeader } from "../../services/api/header";
+import { appendTenantToUrl } from "@/utils/tenant";
 interface TemplateSelectionProps {
   selectedTemplate: Template | null;
   onSelectTemplate: (template: Template) => void;
@@ -27,7 +28,7 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
 
   useEffect(() => {
     // Fetch custom templates summary to get last_updated_at and template meta for sorting and display
-    fetch(`/api/v1/ppt/template-management/summary`, {
+    fetch(appendTenantToUrl(`/api/v1/ppt/template-management/summary`), {
       headers: getHeader(),
     })
       .then(res => res.json())

@@ -16,10 +16,13 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/com
 import { useFontLoader } from "../../hooks/useFontLoader";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import { getHeader } from "../../services/api/header";
+import { appendTenantToUrl } from "@/utils/tenant";
+import { useTenantNavigation } from "@/app/tenant-provider";
 
 const GroupLayoutPreview = () => {
   const params = useParams();
   const router = useRouter();
+  const { pushWithTenant } = useTenantNavigation();
   const rawSlug = ((): string => {
     const value: any = (params as any)?.slug;
     if (typeof value === "string") return value;
@@ -49,7 +52,7 @@ const GroupLayoutPreview = () => {
     const loadCustomLayouts = async () => {
       if (!isCustom || !presentationId) return;
       try {
-        const res = await fetch(`/api/v1/ppt/template-management/get-templates/${presentationId}`, {
+        const res = await fetch(appendTenantToUrl(`/api/v1/ppt/template-management/get-templates/${presentationId}`), {
           headers: getHeader(),
         });
         if (!res.ok) return;
@@ -112,12 +115,12 @@ const GroupLayoutPreview = () => {
   const deleteLayouts = async () => {
     refetch();
     router.back();
-    const response = await fetch(`/api/v1/ppt/template-management/delete-templates/${presentationId}`, {
+    const response = await fetch(appendTenantToUrl(`/api/v1/ppt/template-management/delete-templates/${presentationId}`), {
       method: "DELETE",
       headers: getHeader(),
     });
     if (response.ok) {
-      router.push("/template-preview");
+      pushWithTenant("/template-preview");
     }
   }
 
@@ -154,7 +157,7 @@ const GroupLayoutPreview = () => {
           },
         ],
       };
-      const res = await fetch(`/api/v1/ppt/template-management/save-templates`, {
+      const res = await fetch(appendTenantToUrl(`/api/v1/ppt/template-management/save-templates`), {
         method: "POST",
         headers: getHeader(),
         body: JSON.stringify(payload),
@@ -201,7 +204,7 @@ const GroupLayoutPreview = () => {
               size="sm"
               onClick={() => {
                 trackEvent(MixpanelEvent.TemplatePreview_All_Groups_Button_Clicked, { pathname });
-                router.push("/template-preview");
+                pushWithTenant("/template-preview");
               }}
               className="flex items-center gap-2"
             >

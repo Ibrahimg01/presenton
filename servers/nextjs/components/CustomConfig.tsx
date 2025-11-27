@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Switch } from "./ui/switch";
+import { appendTenantToUrl } from "@/utils/tenant";
 
 interface CustomConfigProps {
   customLlmUrl: string;
@@ -60,7 +61,7 @@ export default function CustomConfig({
 
     try {
       setCustomModelsLoading(true);
-      const response = await fetch("/api/v1/ppt/openai/models/available", {
+      const response = await fetch(appendTenantToUrl("/api/v1/ppt/openai/models/available"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

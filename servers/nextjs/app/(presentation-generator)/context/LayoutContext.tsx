@@ -17,6 +17,7 @@ import * as Recharts from "recharts";
 import * as d3 from 'd3';
 
 import { getHeader } from "../services/api/header";
+import { appendTenantToUrl } from "@/utils/tenant";
 export interface LayoutInfo {
   id: string;
   name?: string;
@@ -358,7 +359,7 @@ export const LayoutProvider: React.FC<{
     const fullDataByTemplateID = new Map<string, FullDataInfo[]>();
     try {
       const customTemplateResponse = await fetch(
-        `/api/v1/ppt/template-management/summary`,
+        appendTenantToUrl(`/api/v1/ppt/template-management/summary`),
         {
           headers: {
             ...getHeader(),
@@ -386,7 +387,7 @@ export const LayoutProvider: React.FC<{
         }
         const presentationId = pid;
         const customLayoutResponse = await fetch(
-          `/api/v1/ppt/template-management/get-templates/${presentationId}`,
+          appendTenantToUrl(`/api/v1/ppt/template-management/get-templates/${presentationId}`),
           {
             headers: {
               ...getHeader(),
