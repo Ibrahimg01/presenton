@@ -115,7 +115,7 @@ async function exportPdf(req: NextRequest) {
     const sanitizedTitle = sanitizeFilename(title ?? "presentation");
     const filename = `${sanitizedTitle || "presentation"}.pdf`;
 
-    return new NextResponse(pdfBody, {
+    return new NextResponse(pdfBody as any, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
