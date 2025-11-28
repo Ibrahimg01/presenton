@@ -107,10 +107,15 @@ async function exportPdf(req: NextRequest) {
       margin: { top: 0, right: 0, bottom: 0, left: 0 },
     });
 
+    const pdfBody =
+      pdfBuffer instanceof Uint8Array
+        ? pdfBuffer
+        : new Uint8Array(pdfBuffer as ArrayBufferLike);
+
     const sanitizedTitle = sanitizeFilename(title ?? "presentation");
     const filename = `${sanitizedTitle || "presentation"}.pdf`;
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBody, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
