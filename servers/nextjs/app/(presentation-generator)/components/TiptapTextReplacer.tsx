@@ -7,8 +7,6 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import Underline from "@tiptap/extension-underline";
-import SelectionEditableWrapper from "./SelectionEditableWrapper";
-import { useSelectionEditor } from "@/store/slices/selectionEdit";
 
 const extensions = [StarterKit, Markdown, Underline];
 
@@ -29,7 +27,7 @@ const TiptapTextReplacer: React.FC<TiptapTextReplacerProps> = ({
   slideIndex,
   onContentChange = () => {},
 }) => {
-  const { open: openSelectionEditor } = useSelectionEditor();
+
   
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -105,30 +103,20 @@ const TiptapTextReplacer: React.FC<TiptapTextReplacerProps> = ({
         rootsRef.current.set(tiptapContainer, {
           root,
           dataPath: dataPath.path,
-
+        
           fallbackText: trimmedText,
         });
         root.render(
-          <SelectionEditableWrapper
-            onAiEditClick={() =>
-              openSelectionEditor({
-                text: initialContent,
-                slideId: slideIndex?.toString() ?? null,
-                elementId: dataPath.path ?? null,
-              })
-            }
-          >
-            <TiptapText
-              content={initialContent}
-
-              onContentChange={(content: string) => {
-                if (dataPath && onContentChange) {
-                  onContentChange(content, dataPath.path, slideIndex);
-                }
-              }}
-              placeholder="Enter text..."
-            />
-          </SelectionEditableWrapper>
+          <TiptapText
+            content={initialContent}
+           
+            onContentChange={(content: string) => {
+              if (dataPath && onContentChange) {
+                onContentChange(content, dataPath.path, slideIndex);
+              }
+            }}
+            placeholder="Enter text..."
+          />
         );
       });
     };
@@ -140,7 +128,7 @@ const TiptapTextReplacer: React.FC<TiptapTextReplacerProps> = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [slideData, slideIndex, openSelectionEditor]);
+  }, [slideData, slideIndex]);
   
   // When slideData changes, update existing editors' content using the stored dataPath
   useEffect(() => {
@@ -148,28 +136,18 @@ const TiptapTextReplacer: React.FC<TiptapTextReplacerProps> = ({
     rootsRef.current.forEach(({ root, dataPath,  fallbackText }) => {
       const newContent = dataPath ? getValueByPath(slideData, dataPath) ?? fallbackText : fallbackText;
       root.render(
-        <SelectionEditableWrapper
-          onAiEditClick={() =>
-            openSelectionEditor({
-              text: newContent,
-              slideId: slideIndex?.toString() ?? null,
-              elementId: dataPath ?? null,
-            })
-          }
-        >
-          <TiptapText
-            content={newContent}
-            onContentChange={(content: string) => {
-              if (dataPath && onContentChange) {
-                onContentChange(content, dataPath, slideIndex);
-              }
-            }}
-            placeholder="Enter text..."
-          />
-        </SelectionEditableWrapper>
+        <TiptapText
+          content={newContent}
+          onContentChange={(content: string) => {
+            if (dataPath && onContentChange) {
+              onContentChange(content, dataPath, slideIndex);
+            }
+          }}
+          placeholder="Enter text..."
+        />
       );
     });
-  }, [slideData, slideIndex, openSelectionEditor]);
+  }, [slideData, slideIndex]);
   // helper functions
     // Function to check if element is inside an ignored element tree
     const isInIgnoredElementTree = (element: HTMLElement): boolean => {
