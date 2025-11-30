@@ -9,6 +9,7 @@ import {
 
 } from "lucide-react";
 import React, { useState } from "react";
+import clsx from "clsx";
 import Wrapper from "@/components/Wrapper";
 import { usePathname } from "next/navigation";
 import {
@@ -40,6 +41,28 @@ import { clearHistory } from "@/store/slices/undoRedoSlice";
 import { useTenantNavigation } from "@/app/tenant-provider";
 import { sanitizeFilename } from "../../utils/others";
 import { getHeader } from "../../services/api/header";
+import { useSelectionEdit } from "@/store/slices/selectionEdit";
+
+const SparklesIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="lucide lucide-sparkles w-3.5 h-3.5 text-[#5146E5]"
+  >
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </svg>
+);
 
 const Header = ({
   presentation_id,
@@ -54,6 +77,8 @@ const Header = ({
   const dashboardHref = appendTenantParam("/dashboard");
   const pathname = usePathname();
   const dispatch = useDispatch();
+  const { enabled: selectionEditEnabled, toggle: toggleSelectionEdit } =
+    useSelectionEdit();
 
 
   const { presentationData, isStreaming } = useSelector(
@@ -304,6 +329,32 @@ const Header = ({
               <Loader2 className="animate-spin text-white font-bold w-6 h-6" />
             )}
 
+            <button
+              type="button"
+              onClick={toggleSelectionEdit}
+              className={clsx(
+                "flex items-center gap-2 rounded-full px-3 py-1 text-xs border transition",
+                selectionEditEnabled
+                  ? "bg-emerald-50 border-emerald-400 text-emerald-700"
+                  : "bg-white border-gray-200 text-gray-600"
+              )}
+            >
+              <SparklesIcon />
+              <span className="font-medium">Enable Select Edit</span>
+              <span
+                className={clsx(
+                  "ml-1 inline-flex h-4 w-7 items-center rounded-full p-0.5 transition",
+                  selectionEditEnabled ? "bg-emerald-500" : "bg-gray-300"
+                )}
+              >
+                <span
+                  className={clsx(
+                    "h-3 w-3 rounded-full bg-white shadow transform transition",
+                    selectionEditEnabled ? "translate-x-3" : "translate-x-0"
+                  )}
+                />
+              </span>
+            </button>
 
             <MenuItems mobile={false} />
             <HeaderNav />

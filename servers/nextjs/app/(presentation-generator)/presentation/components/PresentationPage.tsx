@@ -23,6 +23,7 @@ import LoadingState from "./LoadingState";
 import { useLayout } from "../../context/LayoutContext";
 import { useFontLoader } from "../../hooks/useFontLoader";
 import { usePresentationUndoRedo } from "../hooks/PresentationUndoRedo";
+import SelectionEditorOverlay from "./SelectionEditorOverlay";
 const PresentationPage: React.FC<PresentationPageProps> = ({
   presentation_id,
 }) => {
@@ -130,6 +131,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
 
       <Header presentation_id={presentation_id} currentSlide={selectedSlide} />
       <Help />
+      <SelectionEditorOverlay />
 
       <div
         style={{
