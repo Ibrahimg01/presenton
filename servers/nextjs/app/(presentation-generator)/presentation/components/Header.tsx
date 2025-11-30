@@ -240,7 +240,7 @@ const Header = ({
       {/* Present Button */}
       <Button
         onClick={() => {
-          const to = `?id=${presentation_id}&mode=present&slide=${currentSlide || 0}`;
+          const to = `/presentation?id=${presentation_id}&mode=present&slide=${currentSlide || 0}`;
           trackEvent(MixpanelEvent.Navigation, { from: pathname, to });
           pushWithTenant(to);
         }}
