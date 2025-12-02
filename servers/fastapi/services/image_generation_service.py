@@ -15,6 +15,7 @@ from utils.image_provider import (
     is_gemini_flash_selected,
     is_dalle3_selected,
 )
+from utils.ai_usage_tracker import schedule_openai_usage_report
 import uuid
 
 
@@ -90,6 +91,9 @@ class ImageGenerationService:
             size="1024x1024",
         )
         image_url = result.data[0].url
+        schedule_openai_usage_report(
+            model="dall-e-3", image_count=1, image_size="1024x1024"
+        )
         return await download_file(image_url, output_directory)
 
     async def generate_image_google(self, prompt: str, output_directory: str) -> str:

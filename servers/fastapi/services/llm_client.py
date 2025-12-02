@@ -42,6 +42,7 @@ from models.llm_tools import LLMDynamicTool, LLMTool
 from services.llm_tool_calls_handler import LLMToolCallsHandler
 from utils.async_iterator import iterator_to_async
 from utils.dummy_functions import do_nothing_async
+from utils.ai_usage_tracker import schedule_openai_usage_report
 from utils.get_env import (
     get_anthropic_api_key_env,
     get_custom_llm_api_key_env,
@@ -154,6 +155,19 @@ class LLMClient:
                 return message.content
         return ""
 
+    def _report_usage_from_response(self, model: str, usage) -> None:
+        if not usage:
+            return
+
+        input_tokens = getattr(usage, "prompt_tokens", 0) or 0
+        output_tokens = getattr(usage, "completion_tokens", 0) or 0
+
+        schedule_openai_usage_report(
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+        )
+
     def _get_google_messages(self, messages: List[LLMMessage]) -> List[GoogleContent]:
         contents = []
         for message in messages:
@@ -204,6 +218,8 @@ class LLMClient:
             tools=tools,
             extra_body=extra_body,
         )
+
+        self._report_usage_from_response(model, getattr(response, "usage", None))
 
         if len(response.choices) == 0:
             return None
@@ -509,6 +525,8 @@ class LLMClient:
             tools=all_tools,
             extra_body=extra_body,
         )
+
+        self._report_usage_from_response(model, getattr(response, "usage", None))
 
         if len(response.choices) == 0:
             return None
