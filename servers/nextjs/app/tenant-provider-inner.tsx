@@ -7,11 +7,15 @@ import {
   appendTenantToUrl,
   clearTenantIdFromStorage,
   getTenantIdFromStorage,
+  getCallbackParamsFromUrl,
   setTenantIdInStorage,
 } from "@/utils/tenant";
 
 interface TenantContextValue {
   tenantId: string | null;
+  callbackUrl: string | null;
+  callbackSecret: string | null;
+  siteUrl: string | null;
   appendTenantParam: (url: string) => string;
 }
 
@@ -20,8 +24,14 @@ const TenantContext = createContext<TenantContextValue | undefined>(undefined);
 const TenantProviderInner = ({ children }: { children: React.ReactNode }) => {
   const searchParams = useSearchParams();
   const tenantFromUrl = searchParams.get(TENANT_QUERY_KEY);
+  const callbackUrl = searchParams.get("callback_url");
+  const callbackSecret = searchParams.get("callback_secret");
+  const siteUrl = searchParams.get("site_url");
+
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
+
+  const decodedCallbackUrl = callbackUrl ? decodeURIComponent(callbackUrl) : null;
 
   useEffect(() => {
     if (tenantFromUrl) {
@@ -37,13 +47,26 @@ const TenantProviderInner = ({ children }: { children: React.ReactNode }) => {
   }, [tenantFromUrl]);
 
   const appendTenantParam = useCallback(
-    (url: string) => appendTenantToUrl(url, tenantFromUrl || tenantId),
-    [tenantFromUrl, tenantId]
+    (url: string) =>
+      appendTenantToUrl(
+        url,
+        tenantFromUrl || tenantId,
+        decodedCallbackUrl,
+        callbackSecret,
+        siteUrl
+      ),
+    [callbackSecret, decodedCallbackUrl, siteUrl, tenantFromUrl, tenantId]
   );
 
   const value = useMemo(
-    () => ({ tenantId, appendTenantParam }),
-    [appendTenantParam, tenantId]
+    () => ({
+      tenantId,
+      callbackUrl: decodedCallbackUrl,
+      callbackSecret,
+      siteUrl,
+      appendTenantParam,
+    }),
+    [appendTenantParam, callbackSecret, decodedCallbackUrl, siteUrl, tenantId]
   );
 
   if (checked && !tenantFromUrl) {
@@ -66,9 +89,14 @@ export const useTenantContext = () => {
   const context = useContext(TenantContext);
   if (!context) {
     const storedTenant = getTenantIdFromStorage();
+    const { callbackUrl, callbackSecret, siteUrl } = getCallbackParamsFromUrl();
     return {
       tenantId: storedTenant,
-      appendTenantParam: (url: string) => appendTenantToUrl(url, storedTenant),
+      callbackUrl,
+      callbackSecret,
+      siteUrl,
+      appendTenantParam: (url: string) =>
+        appendTenantToUrl(url, storedTenant, callbackUrl, callbackSecret, siteUrl),
     } satisfies TenantContextValue;
   }
   return context;
@@ -76,7 +104,8 @@ export const useTenantContext = () => {
 
 export const useTenantNavigation = () => {
   const router = useRouter();
-  const { appendTenantParam, tenantId } = useTenantContext();
+  const { appendTenantParam, tenantId, callbackUrl, callbackSecret, siteUrl } =
+    useTenantContext();
 
   const pushWithTenant = useCallback(
     (url: string, options?: Parameters<typeof router.push>[1]) =>
@@ -86,6 +115,9 @@ export const useTenantNavigation = () => {
 
   return {
     tenantId,
+    callbackUrl,
+    callbackSecret,
+    siteUrl,
     appendTenantParam,
     pushWithTenant,
   };
