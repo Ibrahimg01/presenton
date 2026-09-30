@@ -112,6 +112,29 @@ class PptxPresentationCreator:
                     each_shape.picture.is_network = False
 
     async def create_ppt(self):
+        from utils.site_context import enabled, require_owned_path
+        if enabled():
+            from pathlib import Path
+            from urllib.parse import urlparse, unquote
+            shapes = list(self._ppt_model.shapes or [])
+            for slide in self._slide_models:
+                shapes.extend(slide.shapes)
+            static_root = Path("static").resolve()
+            for shape in shapes:
+                if not isinstance(shape, PptxPictureBoxModel):
+                    continue
+                value = shape.picture.path
+                parsed = urlparse(value)
+                if parsed.scheme in {"http", "https"}:
+                    if parsed.path.startswith("/app_data/"):
+                        shape.picture.path = require_owned_path(unquote(parsed.path))
+                        shape.picture.is_network = False
+                    continue
+                candidate = Path(value).resolve()
+                if static_root not in candidate.parents:
+                    shape.picture.path = require_owned_path(value)
+                if candidate.suffix.lower() not in {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}:
+                    raise ValueError("Unsupported presentation image")
         await self.fetch_network_assets()
 
         for slide_model in self._slide_models:

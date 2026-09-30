@@ -1,13 +1,15 @@
+import { siteDirectory } from "@/utils/site-context";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 
 
-const userDataDir = process.env.APP_DATA_DIRECTORY!;
+
 
 export async function POST(request: NextRequest) {
   try {
+    const userDataDir = await siteDirectory("data");
     const formData = await request.formData();
     const file = formData.get("file") as File;
 

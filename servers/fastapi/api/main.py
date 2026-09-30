@@ -16,3 +16,7 @@ app.include_router(API_V1_MOCK_ROUTER)
 
 # Browser traffic is same-origin through the authenticated gateway.
 app.add_middleware(CallbackContextMiddleware)
+
+# Wrap the complete request, including streams and background tasks.
+from api.site_middleware import SiteIdentityMiddleware
+app.add_middleware(SiteIdentityMiddleware)

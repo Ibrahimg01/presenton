@@ -1,3 +1,4 @@
+import { configureRenderPage, siteDirectory } from "@/utils/site-context";
 import { NextResponse } from "next/server";
 import puppeteer from "puppeteer";
 
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
       ],
     });
     const page = await browser.newPage();
+  await configureRenderPage(page);
     await page.setViewport({ width: 1280, height: 720 });
     page.setDefaultNavigationTimeout(300000);
     page.setDefaultTimeout(300000);

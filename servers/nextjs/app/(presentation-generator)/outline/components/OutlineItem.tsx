@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Trash2 } from "lucide-react"
@@ -93,7 +94,7 @@ export function OutlineItem({
         }
         throttleRef.current = window.setTimeout(() => {
             try {
-                setRenderedHtml(marked.parse(content) as string)
+                setRenderedHtml(DOMPurify.sanitize(marked.parse(content) as string))
             } catch {
                 setRenderedHtml("")
             }
@@ -110,7 +111,7 @@ export function OutlineItem({
         if (!isStreaming || isActiveStreaming) return null
         if (!isStableStreaming) return null
         try {
-            return marked.parse(slideOutline.content || "") as string
+            return DOMPurify.sanitize(marked.parse(slideOutline.content || "") as string)
         } catch {
             return null
         }

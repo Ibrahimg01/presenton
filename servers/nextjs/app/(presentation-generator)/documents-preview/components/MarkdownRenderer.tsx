@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 
+import DOMPurify from "dompurify";
 import { marked } from "marked";
 
 interface MarkdownRendererProps {
@@ -15,7 +16,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     const parseMarkdown = async () => {
       try {
         const parsed = await marked.parse(content);
-        setMarkdownContent(parsed);
+        setMarkdownContent(DOMPurify.sanitize(parsed));
       } catch (error) {
         console.error("Error parsing markdown:", error);
         setMarkdownContent("");

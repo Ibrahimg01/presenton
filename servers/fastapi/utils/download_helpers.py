@@ -9,53 +9,35 @@ import aiohttp
 import uuid
 
 
-async def download_file(
-    url: str, save_directory: str, headers: Optional[dict] = None
-) -> Optional[str]:
+async def download_file(url: str, save_directory: str, headers: Optional[dict] = None) -> Optional[str]:
+    from utils.site_context import enabled
+    from utils.public_url import validate_public_url, PublicResolver
     try:
         os.makedirs(save_directory, exist_ok=True)
-
-        parsed_url = urlparse(url)
-        filename = os.path.basename(parsed_url.path)
-
-        if not filename or "." not in filename:
-            async with aiohttp.ClientSession(trust_env=True) as session:
-                async with session.head(url, headers=headers) as response:
-                    if response.status == 200:
-                        content_disposition = response.headers.get(
-                            "Content-Disposition", ""
-                        )
-                        if "filename=" in content_disposition:
-                            filename = content_disposition.split("filename=")[1].strip(
-                                "\"'"
-                            )
-                        else:
-                            content_type = response.headers.get("Content-Type", "")
-                            if content_type:
-                                extension = mimetypes.guess_extension(
-                                    content_type.split(";")[0]
-                                )
-                                if extension:
-                                    filename = f"{uuid.uuid4()}{extension}"
-
-        filename = filename or str(uuid.uuid4())
-        save_path = os.path.join(save_directory, filename)
-
-        async with aiohttp.ClientSession(trust_env=True) as session:
-            async with session.get(url, headers=headers) as response:
-                if response.status == 200:
-                    with open(save_path, "wb") as file:
+        connector = aiohttp.TCPConnector(resolver=PublicResolver()) if enabled() else None
+        async with aiohttp.ClientSession(connector=connector, timeout=aiohttp.ClientTimeout(total=45), trust_env=False) as session:
+            current = url
+            for hop in range(4):
+                if enabled(): validate_public_url(current)
+                async with session.get(current, headers=headers, allow_redirects=False) as response:
+                    if response.status in {301,302,303,307,308}:
+                        from urllib.parse import urljoin
+                        current = urljoin(current, response.headers.get("Location", ""))
+                        headers = None  # Never forward provider credentials on a redirect.
+                        continue
+                    if response.status != 200: return None
+                    extension = mimetypes.guess_extension(response.headers.get("Content-Type", "").split(";")[0]) or ".bin"
+                    save_path = os.path.join(save_directory, str(uuid.uuid4()) + extension)
+                    size = 0
+                    with open(save_path, "xb") as file:
                         async for chunk in response.content.iter_chunked(8192):
+                            size += len(chunk)
+                            if size > 25 * 1024 * 1024: raise ValueError("Asset too large")
                             file.write(chunk)
-                    print(f"File downloaded successfully: {save_path}")
                     return save_path
-                else:
-                    print(f"Failed to download file. HTTP status: {response.status}")
-                    return None
-
-    except Exception as e:
-        print(f"Error downloading file from {url}: {e}")
+    except Exception:
         return None
+    return None
 
 
 async def download_files(

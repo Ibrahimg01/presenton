@@ -16,10 +16,10 @@ const Header: React.FC = () => {
           </Link>
 
           <nav className="flex items-center gap-4">
-            <Link href={appendTenantParam("/custom-layout")} className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900">
+            {process.env.NEXT_PUBLIC_PRESENTON_CUSTOMER_ACCESS !== "1" && (<Link href={appendTenantParam("/custom-layout")} className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900">
               <Plus className="w-5 h-5" />
               <span className="text-sm font-medium font-inter">Create Template</span>
-            </Link>
+            </Link>)}
             <Link href={appendTenantParam("/template-preview")} className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900">
               <Layout className="w-5 h-5" />
               <span className="text-sm font-medium font-inter">Templates</span>

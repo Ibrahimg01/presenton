@@ -157,6 +157,10 @@ async def report_usage_to_wordpress(
 
 
 def schedule_usage_report(tokens: int, usd_cost: float, source: str = "presenton") -> None:
+    from utils.site_context import enabled
+    if enabled():
+        from utils.site_usage import record_tokens
+        record_tokens(tokens, source)
     callback_settings = get_callback_context()
     callback_url = callback_settings.get("callback_url")
     callback_secret = callback_settings.get("callback_secret")

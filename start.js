@@ -1,3 +1,6 @@
+import { randomBytes } from "node:crypto";
+import { writeFileSync, copyFileSync } from "node:fs";
+import { startSiteGateway } from "./security/site-gateway.js";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
@@ -149,7 +152,15 @@ const startNginx = () => {
 
 const main = async () => {
   // Validate access controls before starting any listening process.
-  provisionAuthentication(process.env.PRESENTON_HTPASSWD);
+  if (process.env.PRESENTON_CUSTOMER_ACCESS === "1") {
+    const key = randomBytes(32);
+    mkdirSync("/run/presenton", {recursive:true, mode:0o700});
+    writeFileSync("/run/presenton/site-signing-key", key, {mode:0o600});
+    startSiteGateway({key, wordpressOrigin:process.env.PRESENTON_WORDPRESS_ORIGIN, studioOrigin:process.env.PRESENTON_STUDIO_ORIGIN});
+    copyFileSync(join(__dirname,"security/nginx.customer.conf"),"/etc/nginx/nginx.conf");
+  } else {
+    provisionAuthentication(process.env.PRESENTON_HTPASSWD);
+  }
   delete process.env.PRESENTON_HTPASSWD;
   if (isDev) {
     await setupNodeModules();

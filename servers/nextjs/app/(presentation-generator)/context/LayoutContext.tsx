@@ -85,6 +85,7 @@ const createCacheKey = (templateID: string, fileName: string): string =>
 
 // Extract Babel compilation logic into a utility function
 const compileCustomLayout = (layoutCode: string, React: any, z: any) => {
+  if (process.env.NEXT_PUBLIC_PRESENTON_CUSTOMER_ACCESS === "1") throw new Error("Executable custom layouts are unavailable in customer studios");
 
   const cleanCode = layoutCode
     .replace(/import\s+React\s+from\s+'react';?/g, "")
@@ -358,6 +359,7 @@ export const LayoutProvider: React.FC<{
     const templateLayoutsCache = new Map<string, LayoutInfo[]>();
     const fullDataByTemplateID = new Map<string, FullDataInfo[]>();
     try {
+      if (process.env.NEXT_PUBLIC_PRESENTON_CUSTOMER_ACCESS === "1") return { layoutsById, layoutsByTemplateID, templateSettings: templateSettingsMap, fileMap, templateLayoutsCache, layoutSchema: layouts, fullDataByTemplateID };
       const customTemplateResponse = await fetch(
         appendTenantToUrl(`/api/v1/ppt/template-management/summary`),
         {

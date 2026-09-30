@@ -6,7 +6,7 @@ import ssl
 
 def get_database_url_and_connect_args() -> tuple[str, dict]:
     database_url = get_database_url_env() or "sqlite:///" + os.path.join(
-        get_app_data_directory_env() or "/tmp/presenton", "fastapi.db"
+        os.getenv("APP_DATA_DIRECTORY") or "/tmp/presenton", "fastapi.db"
     )
 
     if database_url.startswith("sqlite://"):

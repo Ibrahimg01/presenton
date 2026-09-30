@@ -1,3 +1,4 @@
+import { configureRenderPage, siteDirectory } from "@/utils/site-context";
 import { ApiError } from "@/models/errors";
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer, { Browser, ElementHandle, Page } from "puppeteer";
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     const id = await getPresentationId(request);
     const tenant = getTenantId(request);
     [browser, page] = await getBrowserAndPage(id, tenant);
-    const screenshotsDir = getScreenshotsDir();
+    const screenshotsDir = await getScreenshotsDir();
 
     const { slides, speakerNotes } = await getSlidesAndSpeakerNotes(page);
     const slides_attributes = await getSlidesAttributes(slides, screenshotsDir);
@@ -103,6 +104,7 @@ async function getBrowserAndPage(id: string, tenant: string): Promise<[Browser, 
   });
 
   const page = await browser.newPage();
+  await configureRenderPage(page);
 
   await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
   page.setDefaultNavigationTimeout(300000);
@@ -120,8 +122,8 @@ async function closeBrowserAndPage(browser: Browser | null, page: Page | null) {
   await browser?.close();
 }
 
-function getScreenshotsDir() {
-  const tempDir = process.env.TEMP_DIRECTORY;
+async function getScreenshotsDir() {
+  const tempDir = await siteDirectory("temp");
   if (!tempDir) {
     console.warn(
       "TEMP_DIRECTORY environment variable not set, skipping screenshot"

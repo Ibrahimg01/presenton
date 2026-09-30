@@ -2,10 +2,11 @@
 /**
  * Plugin Name: Presenton Security Guard
  * Description: Administrator-only Launchpad access and authenticated server-side usage reporting.
- * Version: 1.0.1
+ * Version: 2.0.0
  * Network: true
  */
 if (!defined('ABSPATH')) { exit; }
+require_once __DIR__ . '/presenton-site-login.php';
 
 function presenton_security_is_admin() {
     return is_multisite() ? current_user_can('manage_network_options') : current_user_can('manage_options');
@@ -25,7 +26,7 @@ add_filter('rest_pre_dispatch', function ($result, $server, $request) {
         if (!is_numeric($tokens) || !is_numeric($cost) || (float) $tokens < 0 || (float) $cost < 0 || !is_finite((float) $cost)) {
             return new WP_Error('presenton_invalid_usage', 'Invalid usage values', array('status' => 400));
         }
-    } elseif (strpos($route, '/digital-launchpad/v1/') === 0 && !presenton_security_is_admin()) {
+    } elseif (strpos($route, '/digital-launchpad/v1/') === 0 && (presenton_customer_enabled() || !presenton_security_is_admin())) {
         return new WP_Error('presenton_forbidden', 'Administrator access required', array('status' => 403));
     }
     return $result;
@@ -35,15 +36,15 @@ add_filter('rest_pre_dispatch', function ($result, $server, $request) {
 add_action('admin_menu', function () {
     remove_all_actions('toplevel_page_digital-launchpad');
     add_action('toplevel_page_digital-launchpad', function () {
-        if (!presenton_security_is_admin()) { wp_die('Administrator access required', '', array('response' => 403)); }
+        if (!(presenton_customer_enabled() ? presenton_site_access(get_current_user_id(), get_current_blog_id()) : presenton_security_is_admin())) { wp_die('Site administrator access required', '', array('response' => 403)); }
         $origin = defined('IS_PRESENTON_ORIGIN') ? rtrim(IS_PRESENTON_ORIGIN, '/') : rtrim((string) get_site_option('presenton_security_origin', ''), '/');
         $parts = wp_parse_url($origin);
         if (!$parts || ($parts['scheme'] ?? '') !== 'https' || empty($parts['host']) || !empty($parts['user']) || !empty($parts['pass']) || !empty($parts['query']) || !empty($parts['fragment']) || !empty($parts['path'])) {
             echo '<div class="wrap"><h1>Presentation Studio</h1><p>Configure the secure Presenton origin on the server.</p></div>';
             return;
         }
-        $url = add_query_arg('tenant', get_current_blog_id(), $origin . '/upload');
-        echo '<div class="wrap"><h1>Presentation Studio</h1><p>Open the protected studio and sign in with your administrator login.</p><a class="button button-primary" target="_blank" rel="noopener noreferrer" href="' . esc_url($url) . '">Open Presentation Studio</a></div>';
+        $url = presenton_customer_enabled() ? add_query_arg('site', get_current_blog_id(), $origin . '/auth/start') : add_query_arg('tenant', get_current_blog_id(), $origin . '/upload');
+        echo '<div class="wrap"><h1>Presentation Studio</h1><p>Open your site’s protected presentation studio.</p><a class="button button-primary" target="_blank" rel="noopener noreferrer" href="' . esc_url($url) . '">Open Presentation Studio</a></div>';
     });
 }, PHP_INT_MAX);
 
@@ -66,14 +67,16 @@ add_action('network_admin_menu', function () {
             $parts = wp_parse_url($value);
             if ($parts && ($parts['scheme'] ?? '') === 'https' && !empty($parts['host']) && empty($parts['user']) && empty($parts['pass']) && empty($parts['query']) && empty($parts['fragment']) && empty($parts['path'])) {
                 update_site_option('presenton_security_origin', $value);
-                $message = 'Protected studio address saved.';
+                update_site_option('presenton_customer_access_enabled', !empty($_POST['presenton_customer_access']));
+                $message = 'Studio access settings saved.';
             } else { $message = 'Enter an HTTPS origin without a path, credentials or query.'; }
         }
         echo '<div class="wrap"><h1>Presenton Security</h1>';
         if ($message) { echo '<p>' . esc_html($message) . '</p>'; }
-        echo '<p>The studio is restricted to network administrators. Configure its HTTPS address here; keep provider keys and callback secrets on the server.</p><form method="post">';
+        echo '<p>Customer mode permits each site’s administrators to use that site’s studio. Enable only after the site-isolated server deployment is ready.</p><form method="post">';
         wp_nonce_field('presenton_security_origin');
         echo '<p><label for="presenton_origin">Protected studio address</label></p><input class="regular-text" type="url" name="presenton_origin" id="presenton_origin" required value="' . esc_attr(get_site_option('presenton_security_origin', '')) . '">';
+        echo '<p><label><input type="checkbox" name="presenton_customer_access" value="1" ' . checked(presenton_customer_enabled(), true, false) . '> Enable site administrator access</label></p>';
         submit_button('Save studio address');
         echo '</form></div>';
     });

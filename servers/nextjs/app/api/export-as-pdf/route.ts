@@ -1,3 +1,4 @@
+import { configureRenderPage, siteDirectory } from "@/utils/site-context";
 import puppeteer from "puppeteer";
 
 import { sanitizeFilename } from "@/app/(presentation-generator)/utils/others";
@@ -57,6 +58,7 @@ async function exportPdf(req: NextRequest) {
 
   try {
     const page = await browser.newPage();
+  await configureRenderPage(page);
     await page.setViewport({ width: 1280, height: 720 });
     page.setDefaultNavigationTimeout(300000);
     page.setDefaultTimeout(300000);

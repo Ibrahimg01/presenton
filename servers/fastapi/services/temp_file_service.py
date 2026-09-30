@@ -9,12 +9,23 @@ from pathlib import Path
 class TempFileService:
 
     def __init__(self):
-        self.base_dir = get_temp_directory_env() or "/tmp/presenton"
-        self.cleanup_base_dir()
-        os.makedirs(self.base_dir, exist_ok=True)
+        self._base_dir = os.getenv("TEMP_DIRECTORY") or "/tmp/presenton"
+        from utils.site_context import enabled
+        if not enabled():
+            self.cleanup_base_dir()
+        os.makedirs(self._base_dir, exist_ok=True)
+
+    @property
+    def base_dir(self):
+        from utils.site_context import enabled, SITE_IDENTITY, site_temp_root
+        return site_temp_root() if enabled() else self._base_dir
 
     def create_dir_in_dir(self, base_dir: str, dir_name: Optional[str] = None) -> str:
+        from utils.site_context import enabled, require_owned_path
+        if dir_name and (Path(dir_name).name != dir_name or dir_name in {".", ".."} or "\\" in dir_name):
+            raise ValueError("Invalid temporary directory name")
         temp_dir = os.path.join(base_dir, dir_name if dir_name else str(uuid.uuid4()))
+        if enabled(): require_owned_path(temp_dir, must_exist=False)
         os.makedirs(temp_dir, exist_ok=True)
         return temp_dir
 
