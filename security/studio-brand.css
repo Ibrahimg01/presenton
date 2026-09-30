@@ -1,0 +1,348 @@
+/* ============================================================
+   IS Branding for Presenton (slides.informationsystems.io)
+   Served from WordPress uploads, injected by nginx sub_filter.
+   Edit this file and hard-refresh - no server access, no
+   container restart, no redeploy.
+
+   #140035 deep purple | #234ce0 brand blue | #f65c4b coral
+   ============================================================ */
+
+:root {
+    --is-bg:        #140035;
+    --is-bg-deep:   #0d0022;
+    --is-panel:     #1c0a45;
+    --is-panel-2:   #250f57;
+    --is-blue:      #234ce0;
+    --is-coral:     #f65c4b;
+    --is-text:      #ffffff;
+    --is-text-soft: #e9e4ff;
+    --is-text-mute: #b9aee0;
+    --is-line:      rgba(255,255,255,0.16);
+}
+
+/* ---- Canvas ---- */
+html, body, #__next, #root, main {
+    background: var(--is-bg) !important;
+    color: var(--is-text-soft) !important;
+}
+
+/* ---- Tailwind surface utilities Presenton ships with ---- */
+.bg-white, .bg-gray-50, .bg-gray-100, .bg-slate-50, .bg-slate-100,
+.bg-neutral-50, .bg-neutral-100, .bg-zinc-50, .bg-zinc-100 {
+    background-color: var(--is-panel) !important;
+}
+.bg-gray-200, .bg-slate-200, .bg-neutral-200 {
+    background-color: var(--is-panel-2) !important;
+}
+
+/* ---- Text utilities ---- */
+.text-black, .text-gray-900, .text-gray-800, .text-slate-900,
+.text-slate-800, .text-neutral-900, .text-zinc-900 {
+    color: var(--is-text) !important;
+}
+.text-gray-700, .text-gray-600, .text-gray-500,
+.text-slate-700, .text-slate-600, .text-slate-500,
+.text-neutral-600, .text-neutral-500 {
+    color: var(--is-text-soft) !important;
+}
+.text-gray-400, .text-slate-400, .text-neutral-400 {
+    color: var(--is-text-mute) !important;
+}
+
+/* ---- Headings ---- */
+h1, h2, h3, h4 { color: var(--is-text) !important; }
+
+/* ---- Borders ---- */
+.border, .border-gray-200, .border-gray-300, .border-slate-200,
+.border-slate-300, .border-neutral-200, .divide-y > * {
+    border-color: var(--is-line) !important;
+}
+
+/* ---- Form controls ---- */
+input[type="text"], input[type="email"], input[type="number"],
+input[type="search"], input[type="url"], textarea, select {
+    background-color: rgba(255,255,255,0.07) !important;
+    border: 1px solid var(--is-text) !important;
+    color: var(--is-text) !important;
+    border-radius: 6px !important;
+}
+input::placeholder, textarea::placeholder {
+    color: rgba(255,255,255,0.45) !important;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: var(--is-coral) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(246,92,75,0.25) !important;
+}
+/* macOS renders select with native appearance and ignores
+   background-color unless this is cleared. */
+select {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+/* ---- Primary actions ---- */
+button[type="submit"],
+.bg-indigo-600, .bg-indigo-500, .bg-blue-600, .bg-blue-500,
+.bg-violet-600, .bg-purple-600 {
+    background-color: var(--is-coral) !important;
+    color: #ffffff !important;
+    border-color: var(--is-coral) !important;
+}
+.hover\:bg-indigo-700:hover, .hover\:bg-blue-700:hover {
+    background-color: #ff6d5c !important;
+}
+
+/* ---- Presenton's own top bar (the indigo strip) ---- */
+header, nav, .navbar {
+    background-color: var(--is-bg) !important;
+    border-bottom: 1px solid var(--is-line) !important;
+}
+
+/* ---- Cards / panels ---- */
+.shadow, .shadow-sm, .shadow-md, .shadow-lg, .rounded-lg, .rounded-xl {
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   v2 - covers the light tints and overlays the first pass missed
+   ============================================================ */
+
+/* ---- Every light Tailwind tint, all hues ---- */
+.bg-blue-50, .bg-blue-100, .bg-indigo-50, .bg-indigo-100,
+.bg-violet-50, .bg-violet-100, .bg-purple-50, .bg-purple-100,
+.bg-sky-50, .bg-sky-100, .bg-slate-50, .bg-slate-100,
+.bg-gray-50, .bg-gray-100, .bg-neutral-50, .bg-neutral-100,
+.bg-zinc-50, .bg-zinc-100, .bg-stone-50, .bg-stone-100 {
+    background-color: rgba(255,255,255,0.08) !important;
+}
+
+/* ---- Selects, comboboxes, trigger buttons ---- */
+[role="combobox"], [role="listbox"], [role="option"],
+button[aria-haspopup], .select-trigger, [data-state] > button {
+    background-color: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255,255,255,0.5) !important;
+    color: var(--is-text) !important;
+}
+[role="option"]:hover, [role="option"][data-highlighted] {
+    background-color: var(--is-coral) !important;
+    color: #ffffff !important;
+}
+
+/* ---- Modals, dialogs, popovers, dropdown panels ---- */
+[role="dialog"], [role="alertdialog"], [role="menu"],
+[data-radix-popper-content-wrapper] > *,
+.modal, .dialog, .popover, .dropdown-menu {
+    background-color: var(--is-panel) !important;
+    border-color: var(--is-line) !important;
+    color: var(--is-text-soft) !important;
+}
+[role="dialog"] *, [role="alertdialog"] * {
+    border-color: var(--is-line) !important;
+}
+[role="dialog"] h1, [role="dialog"] h2, [role="dialog"] h3,
+[role="dialog"] label, [role="alertdialog"] h2 {
+    color: var(--is-text) !important;
+}
+[role="dialog"] p, [role="dialog"] span,
+[role="alertdialog"] p { color: var(--is-text-soft) !important; }
+
+/* Backdrop behind modals */
+[data-radix-dialog-overlay], .modal-backdrop, .overlay {
+    background-color: rgba(13,0,34,0.85) !important;
+}
+
+/* ---- Toggles / switches ---- */
+[role="switch"] {
+    background-color: rgba(255,255,255,0.25) !important;
+    border-color: rgba(255,255,255,0.4) !important;
+}
+[role="switch"][data-state="checked"],
+[role="switch"][aria-checked="true"] {
+    background-color: var(--is-coral) !important;
+}
+
+/* ---- Text inside any light-tinted control ---- */
+.bg-blue-50 *, .bg-indigo-50 *, .bg-slate-100 *, .bg-gray-100 * {
+    color: var(--is-text) !important;
+}
+
+/* ---- Save / confirm buttons ---- */
+button[type="submit"], .btn-save,
+[role="dialog"] button.bg-blue-600,
+[role="dialog"] button.bg-indigo-600 {
+    background-color: var(--is-coral) !important;
+    color: #ffffff !important;
+}
+
+/* ---- Placeholder + disabled text ---- */
+::placeholder { color: rgba(255,255,255,0.45) !important; }
+.text-gray-300, .text-slate-300 { color: var(--is-text-mute) !important; }
+
+/* ============================================================
+   v3 - attribute selectors
+   Tailwind arbitrary values like bg-[#5146E5] cannot be matched
+   by a plain class selector, and partial matching also catches
+   variants (hover:bg-blue-100, md:bg-white) in one rule.
+   ============================================================ */
+
+/* Presenton's indigo header bar */
+[class*="5146E5"], [class*="4F46E5"], [class*="6366F1"] {
+    background-color: var(--is-bg) !important;
+}
+
+/* Every light surface utility, including variants */
+[class*="bg-white"], [class*="bg-gray-50"], [class*="bg-gray-100"],
+[class*="bg-gray-200"], [class*="bg-slate-50"], [class*="bg-slate-100"],
+[class*="bg-slate-200"], [class*="bg-neutral-50"], [class*="bg-neutral-100"],
+[class*="bg-zinc-50"], [class*="bg-zinc-100"], [class*="bg-stone-100"],
+[class*="bg-blue-50"], [class*="bg-blue-100"], [class*="bg-indigo-50"],
+[class*="bg-indigo-100"], [class*="bg-sky-50"], [class*="bg-violet-50"],
+[class*="bg-purple-50"], [class*="bg-[#F"], [class*="bg-[#f"],
+[class*="bg-[#E"], [class*="bg-[#e"] {
+    background-color: var(--is-panel) !important;
+}
+
+/* Controls get the lighter wash so they read as inputs */
+button[role="combobox"], [class*="bg-blue-100"][role="combobox"],
+[data-testid*="select"], [class*="w-[180px]"], [class*="w-[200px]"] {
+    background-color: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255,255,255,0.45) !important;
+    color: var(--is-text) !important;
+}
+
+/* Borders */
+[class*="border-gray-"], [class*="border-slate-"], [class*="border-blue-200"],
+[class*="border-neutral-"], [class*="border-zinc-"], [class*="divide-gray-"] {
+    border-color: var(--is-line) !important;
+}
+
+/* Dark text utilities, including variants */
+[class*="text-black"], [class*="text-gray-900"], [class*="text-gray-800"],
+[class*="text-slate-900"], [class*="text-slate-800"], [class*="text-neutral-900"],
+[class*="text-zinc-900"], [class*="text-[#1"], [class*="text-[#2"],
+[class*="text-[#3"] {
+    color: var(--is-text) !important;
+}
+[class*="text-gray-700"], [class*="text-gray-600"], [class*="text-gray-500"],
+[class*="text-slate-600"], [class*="text-slate-500"], [class*="text-neutral-600"] {
+    color: var(--is-text-soft) !important;
+}
+
+/* Cards, tiles, template thumbnails */
+[class*="rounded-lg"][class*="border"], [class*="rounded-xl"][class*="border"],
+[class*="shadow"][class*="rounded"] {
+    background-color: var(--is-panel) !important;
+    border-color: var(--is-line) !important;
+}
+
+/* Back / All Templates nav buttons */
+[class*="rounded-md"][class*="border"]:not([role="combobox"]) {
+    background-color: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255,255,255,0.35) !important;
+    color: var(--is-text) !important;
+}
+
+/* Slide thumbnails are generated artwork - leave them alone so the
+   preview shows what actually renders. */
+[class*="slide"] img, [class*="thumbnail"] img, [class*="preview"] img {
+    background: initial !important;
+}
+
+/* ============================================================
+   v4 - gradient text and the remaining tint hues
+   ============================================================ */
+
+/* Gradient headings: Tailwind paints these with bg-clip-text +
+   text-transparent, so `color` alone does nothing - the fill has
+   to be reset too. */
+[class*="text-transparent"], [class*="bg-clip-text"] {
+    -webkit-text-fill-color: var(--is-text) !important;
+    color: var(--is-text) !important;
+    background-image: none !important;
+    background-color: transparent !important;
+}
+
+/* Warm + status tints the earlier passes skipped */
+[class*="bg-orange-50"], [class*="bg-orange-100"],
+[class*="bg-amber-50"], [class*="bg-amber-100"],
+[class*="bg-yellow-50"], [class*="bg-yellow-100"],
+[class*="bg-red-50"], [class*="bg-rose-50"],
+[class*="bg-green-50"], [class*="bg-emerald-50"],
+[class*="bg-teal-50"], [class*="bg-cyan-50"] {
+    background-color: rgba(246,92,75,0.14) !important;
+    border-color: rgba(246,92,75,0.4) !important;
+}
+
+/* Notice text on those tints */
+[class*="text-orange-"], [class*="text-amber-"], [class*="text-yellow-"] {
+    color: #ffd9d3 !important;
+}
+[class*="text-red-"], [class*="text-rose-"] { color: #ff8b7e !important; }
+[class*="text-green-"], [class*="text-emerald-"] { color: #7fe3c0 !important; }
+
+/* Muted body copy that sits just above the background */
+[class*="text-gray-400"], [class*="text-slate-400"],
+[class*="text-neutral-400"], [class*="text-zinc-400"],
+[class*="text-muted"] {
+    color: var(--is-text-mute) !important;
+}
+
+/* Dashed dropzones */
+[class*="border-dashed"] {
+    border-color: rgba(255,255,255,0.35) !important;
+}
+
+/* ============================================================
+   v5 - gradients and shadcn design tokens
+   ============================================================ */
+
+/* Light gradients are background-IMAGES, so background-color never
+   wins. from-slate-50/to-slate-100 is what kept the Custom Template
+   page light and turned its white heading invisible. */
+[class*="bg-gradient"][class*="from-slate"],
+[class*="bg-gradient"][class*="from-gray"],
+[class*="bg-gradient"][class*="from-white"],
+[class*="bg-gradient"][class*="from-zinc"],
+[class*="bg-gradient"][class*="from-neutral"],
+[class*="bg-gradient"][class*="from-blue-50"],
+[class*="bg-gradient"][class*="from-indigo-50"] {
+    background-image: none !important;
+    background-color: var(--is-bg) !important;
+}
+
+/* shadcn/ui tokens - these drive bg-card, bg-popover, bg-muted,
+   border, input and ring across the whole app. Overriding the
+   variables covers every component at once.
+   Values are HSL triplets, which is the format shadcn expects. */
+:root, .dark, [data-theme] {
+    --background: 263 100% 10% !important;
+    --foreground: 249 100% 95% !important;
+    --card: 258 75% 15% !important;
+    --card-foreground: 249 100% 95% !important;
+    --popover: 258 75% 17% !important;
+    --popover-foreground: 249 100% 95% !important;
+    --primary: 6 90% 63% !important;
+    --primary-foreground: 0 0% 100% !important;
+    --secondary: 258 40% 25% !important;
+    --secondary-foreground: 249 100% 95% !important;
+    --muted: 258 40% 22% !important;
+    --muted-foreground: 258 40% 75% !important;
+    --accent: 258 45% 28% !important;
+    --accent-foreground: 0 0% 100% !important;
+    --border: 258 30% 32% !important;
+    --input: 258 30% 32% !important;
+    --ring: 6 90% 63% !important;
+}
+
+/* Belt and braces for the utility forms of the same tokens */
+[class*="bg-card"], [class*="bg-popover"], [class*="bg-background"] {
+    background-color: var(--is-panel) !important;
+}
+[class*="bg-muted"], [class*="bg-secondary"], [class*="bg-accent"] {
+    background-color: rgba(255,255,255,0.08) !important;
+}
+[class*="text-card-foreground"], [class*="text-foreground"] {
+    color: var(--is-text-soft) !important;
+}
+[class*="text-muted-foreground"] { color: var(--is-text-mute) !important; }

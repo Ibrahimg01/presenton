@@ -15,7 +15,7 @@ test('gateway binds session to site and rejects spoofing, forged render access a
  global.fetch=async(url,options)=>{
   if(String(url).startsWith('https://wordpress.example/')) {
    const body=JSON.parse(options.body);
-   if(body.ticket==='a'.repeat(64))return new Response(JSON.stringify({site:1,user:7}));
+   if(body.ticket==='a'.repeat(64))return new Response(JSON.stringify({site:1,user:7,parent_origin:'https://customer.wordpress.example'}));
    return new Response('{}',{status:403});
   }
   return realFetch(url,options);
@@ -26,6 +26,7 @@ test('gateway binds session to site and rejects spoofing, forged render access a
  try {
   assert.equal((await realFetch(base+'/verify')).status,403);
   assert.equal((await request('/verify',{'x-original-uri':'/upload?tenant=1'})).status,204);
+  assert.equal((await request('/verify',{'x-original-uri':'/upload?tenant=1','origin':'https://evil.example'})).headers.get('x-presenton-frame-ancestors'),'https://customer.wordpress.example');
   for(const tenant of ['2','all','1&tenant=2'])assert.equal((await request('/verify',{'x-original-uri':'/upload?tenant='+tenant})).status,403);
   for(const p of ['/api/user-config','/api/save-layout','/api/v1/ppt/ollama/model/pull','/api/v1/ppt/html-to-react/'])assert.equal((await request('/verify',{'x-original-uri':p})).status,403);
   assert.equal((await request('/app_data/sites/1/images/test.txt')).status,200);

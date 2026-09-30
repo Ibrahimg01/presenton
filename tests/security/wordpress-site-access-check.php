@@ -4,6 +4,8 @@ define('ABSPATH',__DIR__);define('HOUR_IN_SECONDS',3600);
 $actions=[];$routes=[];$blog=1;$options=[];$transients=[];$enabled=true;$roles=[7=>[1=>true],8=>[2=>true]];
 function add_action($hook,$callback){global $actions;$actions[$hook]=$callback;}
 function register_rest_route($namespace,$route,$args){global $routes;$routes[$route]=$args['callback'];}
+function wp_parse_url($url){return parse_url($url);}
+function get_admin_url($site,$path='', $scheme='https'){return 'https://site'.$site.'.example/wp-admin/'.$path;}
 function get_site($id){return in_array($id,[1,2])?(object)['deleted'=>false,'spam'=>false,'archived'=>false]:false;}
 function is_super_admin($id){return $id===9;}
 function is_user_member_of_blog($user,$site){global $roles;return isset($roles[$user][$site]);}
@@ -37,6 +39,6 @@ $options[$name]=['site'=>1,'user'=>7,'wp_session'=>'valid-wp-session','expires'=
 check($routes['/exchange'](new Request(['code'=>$code,'verifier'=>str_repeat('c',43)])) instanceof WP_Error,'PKCE mismatch denied');
 $result=$routes['/exchange'](new Request(['code'=>$code,'verifier'=>$verifier]));check($result instanceof WP_REST_Response,'correct exchange succeeds');
 check($routes['/exchange'](new Request(['code'=>$code,'verifier'=>$verifier])) instanceof WP_Error,'code replay denied');
-$ticket=$result->data['ticket'];check($routes['/session'](new Request(['ticket'=>$ticket])) instanceof WP_REST_Response,'session accepted');
+$ticket=$result->data['ticket'];check($routes['/session'](new Request(['ticket'=>$ticket]))->data['parent_origin']==='https://site1.example','parent origin comes from verified site');check($routes['/session'](new Request(['ticket'=>$ticket])) instanceof WP_REST_Response,'session accepted');
 unset($roles[7][1]);check($routes['/session'](new Request(['ticket'=>$ticket])) instanceof WP_Error,'removed membership revokes session');
 echo "PASS: own-site admin, super-admin selection, nonmember denial, PKCE, replay protection, membership revocation\n";

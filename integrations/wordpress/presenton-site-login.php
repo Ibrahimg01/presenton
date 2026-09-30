@@ -10,6 +10,11 @@ function presenton_site_access($user_id, $site_id) {
     try { return user_can($user_id, 'manage_options'); }
     finally { restore_current_blog(); }
 }
+function presenton_parent_origin($site_id) {
+    $parts = wp_parse_url(get_admin_url($site_id, '', 'https'));
+    if (!$parts || ($parts['scheme'] ?? '') !== 'https' || empty($parts['host']) || !empty($parts['user']) || !empty($parts['pass'])) { return ''; }
+    return 'https://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
+}
 function presenton_customer_enabled() { return (bool) get_site_option('presenton_customer_access_enabled', false); }
 function presenton_login_option_name($kind, $value) { return 'presenton_' . $kind . '_' . hash('sha256', $value); }
 function presenton_identity_error() { return new WP_Error('presenton_access_denied', 'Site access denied', array('status'=>403)); }
@@ -77,7 +82,7 @@ add_action('rest_api_init', function () {
                 $name=presenton_login_option_name('session',$ticket); $record=get_transient($name);
                 if ($operation==='logout') { delete_transient($name); return new WP_REST_Response(array('ok'=>true),200,array('Cache-Control'=>'no-store')); }
                 if (!is_array($record) || (!presenton_site_access($record['user'],$record['site']) || !WP_Session_Tokens::get_instance($record['user'])->verify($record['wp_session'] ?? ''))) { return presenton_identity_error(); }
-                return new WP_REST_Response(array('site'=>$record['site'],'user'=>$record['user']),200,array('Cache-Control'=>'no-store'));
+                return new WP_REST_Response(array('site'=>$record['site'],'user'=>$record['user'],'parent_origin'=>presenton_parent_origin($record['site'])),200,array('Cache-Control'=>'no-store'));
             } finally { restore_current_blog(); }
         }));
     }

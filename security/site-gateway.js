@@ -25,7 +25,9 @@ export function startSiteGateway({key, wordpressOrigin, studioOrigin, port=8082}
     const cached=cache.get(hash(ticket));
     if (cached && cached.until>now()) return cached.identity;
     const value=await callWP('session',{ticket});
-    const identity={aud:'presenton-site',site:String(value.site),user:String(value.user),exp:now()+300};
+    const parent=new URL(value.parent_origin);
+    if(parent.protocol!=='https:' || parent.origin!==value.parent_origin || parent.username || parent.password) throw Error('Invalid parent origin');
+    const identity={aud:'presenton-site',site:String(value.site),user:String(value.user),parent:parent.origin,exp:now()+300};
     verifyIdentity(signIdentity(identity,key),key);
     if (cache.size>2000) cache.clear();
     cache.set(hash(ticket),{until:now()+30,identity});
@@ -63,7 +65,7 @@ export function startSiteGateway({key, wordpressOrigin, studioOrigin, port=8082}
         if(original.searchParams.has('tenant') && original.searchParams.getAll('tenant').some(t=>t!==identity.site)) throw Error('Site mismatch');
         // Management surfaces are not customer APIs, including for super-admin site sessions.
         if(/^\/(?:mcp|docs|openapi.json|custom-template|custom-layout)(?:\/|$)/.test(original.pathname) || /^\/api\/(?:save-layout|user-config)(?:\/|$)/.test(original.pathname) || /^\/api\/v1\/(?:webhook|mock)/.test(original.pathname) || /^\/api\/v1\/ppt\/(?:ollama|openai|google|anthropic|slide-to-html|html-to-react|html-edit|template-management|pptx-slides|pdf-slides)(?:\/|$)/.test(original.pathname)) throw Error('Server management only');
-        res.writeHead(204,{'X-Presenton-Identity':signIdentity({...identity,exp:now()+300},key),'X-Presenton-Site':identity.site});return res.end();
+        res.writeHead(204,{'X-Presenton-Identity':signIdentity({...identity,exp:now()+300},key),'X-Presenton-Site':identity.site,'X-Presenton-Frame-Ancestors':identity.parent || "'none'"});return res.end();
       }
       if(u.pathname.startsWith('/app_data/')) {
         if(!['GET','HEAD'].includes(req.method)) throw Error('Read only');
