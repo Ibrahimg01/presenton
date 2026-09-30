@@ -13,7 +13,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 
-def migrate(root: Path, apply=False, legacy_temp=None):
+def migrate(root: Path, apply=False, legacy_temp=None, allow_missing=False):
     os.umask(0o077)
     root = root.resolve()
     with sqlite3.connect(f'file:{root / "fastapi.db"}?mode=ro', uri=True) as source:
@@ -35,13 +35,17 @@ def migrate(root: Path, apply=False, legacy_temp=None):
             slides = [dict(r) for r in source.execute('SELECT * FROM slides') if r['presentation'] in ids]
             paths = set()
             supporting = {}
+            missing = []
             for row in owned:
                 for value in json.loads(row.get('file_paths') or '[]'):
                     if value.startswith('/tmp/presenton/'):
                         relative = Path(value).relative_to('/tmp/presenton')
                         candidate = Path(legacy_temp) / relative if legacy_temp else None
-                        if not candidate or '..' in relative.parts or candidate.is_symlink() or not candidate.resolve().is_relative_to(Path(legacy_temp).resolve()) or not candidate.is_file():
-                            raise ValueError('Legacy supporting document missing; preserve and review before migration')
+                        if not candidate or '..' in relative.parts or candidate.is_symlink() or not candidate.resolve().is_relative_to(Path(legacy_temp).resolve()):
+                            raise ValueError('Unsafe supporting document path')
+                        if not candidate.is_file():
+                            if not allow_missing: raise ValueError('Legacy supporting document missing; preserve and review before migration')
+                            missing.append(value)
                         supporting[value] = (candidate, 'uploads/legacy/' + str(relative))
             def collect(value):
                 if isinstance(value, str):
@@ -59,7 +63,9 @@ def migrate(root: Path, apply=False, legacy_temp=None):
                         if '..' in Path(relative).parts or candidate.is_symlink() or not candidate.resolve().is_relative_to(root):
                             raise ValueError('Unsafe asset path')
                         if not candidate.is_file():
-                            raise ValueError('Missing referenced asset: ' + relative)
+                            if not allow_missing: raise ValueError('Missing referenced asset: ' + relative)
+                            missing.append('/app_data/' + relative)
+                            continue
                         paths.add(relative)
                 elif isinstance(value, dict):
                     for item in value.values(): collect(item)
@@ -71,11 +77,11 @@ def migrate(root: Path, apply=False, legacy_temp=None):
                 for row in source.execute('SELECT * FROM imageasset'):
                     if str(row['path']).removeprefix('/app_data/') in paths:
                         assets.append(dict(row))
-            plans.append((site, destination, owned, slides, assets, paths, supporting))
-        print('Migration plan:', [{'site': p[0], 'presentations': len(p[2]), 'slides': len(p[3]), 'files': len(p[5])} for p in plans])
+            plans.append((site, destination, owned, slides, assets, paths, supporting, missing))
+        print('Migration plan:', [{'site': p[0], 'presentations': len(p[2]), 'slides': len(p[3]), 'files': len(p[5]), 'already_missing': len(p[7])} for p in plans])
         if not apply:
             return
-        for site, destination, owned, slides, assets, paths, supporting in plans:
+        for site, destination, owned, slides, assets, paths, supporting, missing in plans:
             destination.mkdir(parents=True, mode=0o700)
             with sqlite3.connect(destination / 'fastapi.db') as target:
                 # Recreate schema without copying other customers' bytes/free pages.
@@ -99,7 +105,9 @@ def migrate(root: Path, apply=False, legacy_temp=None):
                 output = destination / relative
                 output.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(root / relative, output)
+            (destination / 'migration-missing-files.json').write_text(json.dumps(missing))
             for candidate, relative in supporting.values():
+                if not candidate.is_file(): continue
                 output = destination / relative
                 output.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(candidate, output)
@@ -111,5 +119,6 @@ if __name__ == '__main__':
     parser.add_argument('--data-root', type=Path, required=True)
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--legacy-temp', type=Path)
+    parser.add_argument('--allow-missing-files', action='store_true')
     args = parser.parse_args()
-    migrate(args.data_root, args.apply, args.legacy_temp)
+    migrate(args.data_root, args.apply, args.legacy_temp, args.allow_missing_files)
