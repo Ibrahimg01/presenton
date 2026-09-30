@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Presenton Security Guard
  * Description: Administrator-only Launchpad access and authenticated server-side usage reporting.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Network: true
  */
 if (!defined('ABSPATH')) { exit; }
@@ -36,7 +36,7 @@ add_action('admin_menu', function () {
     remove_all_actions('toplevel_page_digital-launchpad');
     add_action('toplevel_page_digital-launchpad', function () {
         if (!presenton_security_is_admin()) { wp_die('Administrator access required', '', array('response' => 403)); }
-        $origin = defined('IS_PRESENTON_ORIGIN') ? rtrim(IS_PRESENTON_ORIGIN, '/') : '';
+        $origin = defined('IS_PRESENTON_ORIGIN') ? rtrim(IS_PRESENTON_ORIGIN, '/') : rtrim((string) get_site_option('presenton_security_origin', ''), '/');
         $parts = wp_parse_url($origin);
         if (!$parts || ($parts['scheme'] ?? '') !== 'https' || empty($parts['host']) || !empty($parts['user']) || !empty($parts['pass']) || !empty($parts['query']) || !empty($parts['fragment']) || !empty($parts['path'])) {
             echo '<div class="wrap"><h1>Presentation Studio</h1><p>Configure the secure Presenton origin on the server.</p></div>';
@@ -54,3 +54,27 @@ add_action('admin_enqueue_scripts', function ($hook) {
     wp_dequeue_script('dl-proxy-interceptor');
     wp_deregister_script('dl-proxy-interceptor');
 }, PHP_INT_MAX);
+
+// The public studio origin is configuration, never a provider credential.
+add_action('network_admin_menu', function () {
+    add_submenu_page('settings.php', 'Presenton Security', 'Presenton Security', 'manage_network_options', 'presenton-security', function () {
+        if (!presenton_security_is_admin()) { wp_die('Administrator access required', '', array('response' => 403)); }
+        $message = '';
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            check_admin_referer('presenton_security_origin');
+            $value = isset($_POST['presenton_origin']) && is_string($_POST['presenton_origin']) ? rtrim(trim(wp_unslash($_POST['presenton_origin'])), '/') : '';
+            $parts = wp_parse_url($value);
+            if ($parts && ($parts['scheme'] ?? '') === 'https' && !empty($parts['host']) && empty($parts['user']) && empty($parts['pass']) && empty($parts['query']) && empty($parts['fragment']) && empty($parts['path'])) {
+                update_site_option('presenton_security_origin', $value);
+                $message = 'Protected studio address saved.';
+            } else { $message = 'Enter an HTTPS origin without a path, credentials or query.'; }
+        }
+        echo '<div class="wrap"><h1>Presenton Security</h1>';
+        if ($message) { echo '<p>' . esc_html($message) . '</p>'; }
+        echo '<p>The studio is restricted to network administrators. Configure its HTTPS address here; keep provider keys and callback secrets on the server.</p><form method="post">';
+        wp_nonce_field('presenton_security_origin');
+        echo '<p><label for="presenton_origin">Protected studio address</label></p><input class="regular-text" type="url" name="presenton_origin" id="presenton_origin" required value="' . esc_attr(get_site_option('presenton_security_origin', '')) . '">';
+        submit_button('Save studio address');
+        echo '</form></div>';
+    });
+});
