@@ -168,7 +168,7 @@ async def upload_font(
             shutil.copyfileobj(font_file.file, buffer)
         
         # Generate accessible URL
-        font_url = f"/app_data/fonts/{unique_filename}"
+        font_url = f"{get_app_data_directory_env()}/fonts/{unique_filename}"
         
         return FontUploadResponse(
             success=True,
@@ -225,7 +225,7 @@ async def list_fonts():
                             "filename": filename,
                             "font_name": font_name,  # Real font family name from metadata
                             "original_name": base_name,
-                            "font_url": f"/app_data/fonts/{filename}",
+                            "font_url": f"{get_app_data_directory_env()}/fonts/{filename}",
                             "font_type": SUPPORTED_FONT_EXTENSIONS.get(file_ext, 'unknown'),
                             "file_size": os.path.getsize(file_path)
                         })

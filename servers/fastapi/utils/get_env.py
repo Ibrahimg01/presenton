@@ -10,10 +10,16 @@ def get_database_url_env():
 
 
 def get_app_data_directory_env():
+    from utils.site_context import enabled, SITE_IDENTITY, site_data_root
+    if enabled():
+        return site_data_root()
     return os.getenv("APP_DATA_DIRECTORY")
 
 
 def get_temp_directory_env():
+    from utils.site_context import enabled, SITE_IDENTITY, site_temp_root
+    if enabled():
+        return site_temp_root()
     return os.getenv("TEMP_DIRECTORY")
 
 

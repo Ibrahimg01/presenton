@@ -1,4 +1,5 @@
 <?php
+function get_site_option($key,$default=false) { return $default; }
 // Minimal WordPress harness: exercises the registered REST authentication filter.
 define('ABSPATH', __DIR__);
 if (getenv('TEST_SECRET_CONFIGURED')) define('IS_PRESENTON_AI_SECRET', str_repeat('s', 40));

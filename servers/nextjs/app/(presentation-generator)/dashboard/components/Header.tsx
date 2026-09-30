@@ -30,7 +30,7 @@ const Header = () => {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link
+            {process.env.NEXT_PUBLIC_PRESENTON_CUSTOMER_ACCESS !== "1" && (<Link
               href={customTemplateHref}
               prefetch={false}
               onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: customTemplateHref })}
@@ -39,7 +39,7 @@ const Header = () => {
             >
               <FilePlus2 className="w-5 h-5" />
               <span className="text-sm font-medium font-inter">Create Template</span>
-            </Link>
+            </Link>)}
             <Link
               href={templatePreviewHref}
               prefetch={false}

@@ -1,3 +1,4 @@
+from utils.site_context import render_headers
 import json
 import os
 import aiohttp
@@ -27,7 +28,7 @@ async def export_presentation(
     if export_as == "pptx":
 
         # Get the converted PPTX model from the Next.js service
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers=render_headers()) as session:
             async with session.get(
                 f"http://127.0.0.1:8081/api/presentation_to_pptx_model?id={presentation_id}&tenant={tenant}"
             ) as response:
@@ -59,7 +60,7 @@ async def export_presentation(
             path=pptx_path,
         )
     else:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers=render_headers()) as session:
             async with session.post(
                 f"http://127.0.0.1:8081/api/export-as-pdf?tenant={tenant}",
                 json={

@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import React from "react";
 
 export type RemoteSvgOptions = {
@@ -14,7 +15,7 @@ function transformSvg(svgText: string, options: RemoteSvgOptions): string {
     const parser = new DOMParser();
     const doc = parser.parseFromString(svgText, "image/svg+xml");
     const svgEl = doc.querySelector("svg");
-    if (!svgEl) return svgText;
+    if (!svgEl) return "";
     svgEl.style.outline = "none";
     svgEl.style.border = "none";
     svgEl.style.margin = "0";
@@ -72,9 +73,9 @@ function transformSvg(svgText: string, options: RemoteSvgOptions): string {
       });
     
 
-    return svgEl.outerHTML;
+    return DOMPurify.sanitize(svgEl.outerHTML, { USE_PROFILES: { svg: true, svgFilters: true } });
   } catch {
-    return svgText;
+    return "";
   }
 }
 

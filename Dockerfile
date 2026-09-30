@@ -18,6 +18,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 WORKDIR /app  
 
 # Set environment variables
+ARG CUSTOMER_ACCESS=0
+ENV NEXT_PUBLIC_PRESENTON_CUSTOMER_ACCESS=$CUSTOMER_ACCESS
 ENV APP_DATA_DIRECTORY=/app_data
 ENV TEMP_DIRECTORY=/tmp/presenton
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium

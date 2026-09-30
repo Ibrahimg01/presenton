@@ -1,3 +1,4 @@
+from utils.site_context import render_headers
 import aiohttp
 from fastapi import HTTPException
 from models.presentation_layout import PresentationLayoutModel
@@ -5,7 +6,7 @@ from typing import List
 
 async def get_layout_by_name(layout_name: str) -> PresentationLayoutModel:
     url = f"http://127.0.0.1:8081/api/template?group={layout_name}"
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(headers=render_headers()) as session:
         async with session.get(url) as response:
             if response.status != 200:
                 error_text = await response.text()
