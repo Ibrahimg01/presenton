@@ -25,70 +25,16 @@ export const getTenantIdFromUrl = (): string | null => {
   return params.get(TENANT_QUERY_KEY);
 };
 
-export const getCallbackParamsFromUrl = () => {
-  if (typeof window === "undefined")
-    return { callbackUrl: null, callbackSecret: null, siteUrl: null } as const;
-
-  const params = new URLSearchParams(window.location.search);
-  const callbackUrl = params.get(CALLBACK_URL_QUERY_KEY);
-
-  return {
-    callbackUrl: callbackUrl ? decodeURIComponent(callbackUrl) : null,
-    callbackSecret: params.get(CALLBACK_SECRET_QUERY_KEY),
-    siteUrl: params.get(SITE_URL_QUERY_KEY),
-  } as const;
-};
-
+// Callback destinations and secrets are server-managed.
+export const getCallbackParamsFromUrl = () => ({ callbackUrl: null, callbackSecret: null, siteUrl: null });
 export const appendTenantToUrl = (
-  url: string,
-  tenantId?: string | null,
-  callbackUrl?: string | null,
-  callbackSecret?: string | null,
-  siteUrl?: string | null
+  url: string, tenantId?: string | null, _callbackUrl?: string | null,
+  _callbackSecret?: string | null, _siteUrl?: string | null
 ): string => {
   const tenant = tenantId ?? getTenantIdFromUrl() ?? getTenantIdFromStorage();
-  const callbackParams = getCallbackParamsFromUrl();
-  const finalCallbackUrl = callbackUrl ?? callbackParams.callbackUrl;
-  const finalCallbackSecret = callbackSecret ?? callbackParams.callbackSecret;
-  const finalSiteUrl = siteUrl ?? callbackParams.siteUrl;
-
-  if (!tenant && !finalCallbackUrl && !finalCallbackSecret && !finalSiteUrl)
-    return url;
-
-  try {
-    const base = typeof window !== "undefined" ? window.location.origin : "http://localhost";
-    const urlObj = new URL(url, base);
-    if (tenant) {
-      urlObj.searchParams.set(TENANT_QUERY_KEY, tenant);
-    }
-    if (finalCallbackUrl) {
-      urlObj.searchParams.set(CALLBACK_URL_QUERY_KEY, finalCallbackUrl);
-    }
-    if (finalCallbackSecret) {
-      urlObj.searchParams.set(CALLBACK_SECRET_QUERY_KEY, finalCallbackSecret);
-    }
-    if (finalSiteUrl) {
-      urlObj.searchParams.set(SITE_URL_QUERY_KEY, finalSiteUrl);
-    }
-    const hash = urlObj.hash || "";
-    return `${urlObj.pathname}${urlObj.search}${hash}`;
-  } catch (error) {
-    const params = new URLSearchParams();
-    if (tenant) {
-      params.append(TENANT_QUERY_KEY, tenant);
-    }
-    if (finalCallbackUrl) {
-      params.append(CALLBACK_URL_QUERY_KEY, finalCallbackUrl);
-    }
-    if (finalCallbackSecret) {
-      params.append(CALLBACK_SECRET_QUERY_KEY, finalCallbackSecret);
-    }
-    if (finalSiteUrl) {
-      params.append(SITE_URL_QUERY_KEY, finalSiteUrl);
-    }
-
-    const separator = url.includes("?") ? "&" : "?";
-    const paramString = params.toString();
-    return paramString ? `${url}${separator}${paramString}` : url;
-  }
+  const base = typeof window !== "undefined" ? window.location.origin : "http://localhost";
+  const parsed = new URL(url, base);
+  for (const key of [CALLBACK_URL_QUERY_KEY, CALLBACK_SECRET_QUERY_KEY, SITE_URL_QUERY_KEY]) parsed.searchParams.delete(key);
+  if (tenant) parsed.searchParams.set(TENANT_QUERY_KEY, tenant);
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
 };

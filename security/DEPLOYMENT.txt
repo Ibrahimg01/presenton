@@ -1,0 +1,76 @@
+Presenton restricted administrator deployment
+
+This patch temporarily restricts the studio to trusted administrators. It does
+not implement customer accounts or tenant isolation. A tenant query parameter
+is a data selector, not an authorization boundary. Do not share the studio login
+with customers or embed it in WordPress. Reopening customer access requires a
+separate identity, tenant ownership, and usage authorization implementation.
+
+Before deployment
+1. Take a database and app_data backup using the host's private backup storage.
+2. Keep any compromised provider key revoked. Create a replacement only after
+   the public boundary has passed the anonymous-access checks below.
+3. Build this source using Dockerfile (Node 22). Only container port 80 should
+   be published, behind the existing HTTPS reverse proxy. Never publish ports
+   3000, 8000, 8001 or 8081. Keep the server firewall enabled.
+4. On the Linux server, generate one strong administrator password hash with
+   `openssl passwd -6` (interactive input). Set PRESENTON_HTPASSWD in the host's
+   private environment to `admin:` followed by the complete returned hash.
+   Do not put the password or hash in Git, screenshots, chat, or shell history.
+   When using a Compose .env file, single-quote its value so dollar signs are
+   preserved; verify configuration without printing credentials. Startup fails
+   closed if the required hash is missing or malformed.
+5. Set LLM, OPENAI_MODEL, and provider credentials in the server environment.
+   Browser credential editing and disk userConfig loading are disabled.
+   Keep any old userConfig.json in private incident evidence if needed; do not
+   serve it. CAN_CHANGE_KEYS is forced false.
+6. Optional WordPress usage accounting: configure one trusted HTTPS endpoint in
+   PRESENTON_USAGE_CALLBACK_URL and a random secret of at least 32 characters in
+   PRESENTON_USAGE_CALLBACK_SECRET. Configure the same value as the existing
+   IS_PRESENTON_AI_SECRET constant in WordPress server configuration. No secret
+   or callback URL belongs in a browser query, localization object, or logs.
+7. Install integrations/wordpress/presenton-security-guard.php as a network-active
+   plugin (or as a top-level must-use plugin). Set IS_PRESENTON_ORIGIN in private
+   wp-config.php configuration to the studio's HTTPS origin, without a path.
+   The guard replaces the old iframe with a protected-studio link, disables the
+   legacy browser interceptor, requires network-administrator permissions, and
+   rejects callbacks when the shared secret is absent or invalid.
+
+Deployment verification
+- Without credentials, /upload, /api/v1/ppt/presentation/all?tenant=all,
+  /api/user-config, /api/read-file, /docs, /openapi.json, /mcp, and known
+  /app_data/exports files must return HTTP 401. Verify through both the public
+  hostname and any origin address. Do not print response data or credentials.
+- With the administrator login over HTTPS, the UI should load. Provider-config
+  GET and POST must still return 403. /files/update must return 410.
+- Open the WordPress launchpad as a network administrator. Confirm it opens the
+  protected studio separately. A subscriber must be denied the old proxy route.
+- An empty/unsigned WordPress usage callback must return 401.
+- Check an existing presentation export before allowing normal use. Internal
+  rendering uses port 8081 bound to container loopback only. No paid generation
+  is needed for the initial access-control tests.
+- Add the replacement API key on the server, then perform one small authorized
+  generation and verify the expected project usage and WordPress accounting.
+
+Validation performed locally
+- Next.js production build and TypeScript checks.
+- Node security tests: auth configuration fails closed and document read limits.
+- Python tests: callback configuration cannot be supplied by a browser;
+  unsafe callback URLs, cross-origin mutations and unsafe file paths rejected.
+- PHP syntax and callback/proxy authorization harness.
+- Compiled nginx integration: 11 anonymous entry points denied, authenticated
+  traffic accepted, internal rendering traffic accepted, Authorization stripped
+  upstream, and query values omitted from access logs.
+  The macOS nginx harness uses an APR1 test hash; production startup requires
+  SHA-512 crypt and must be verified on the Linux deployment host.
+
+Remaining limits
+- This is emergency administrator-only containment, not a multi-tenant security
+  certification. The full container build and real presentation export still
+  need verification on the Linux host.
+- Dependency updates remove the critical findings observed at audit time.
+  Moderate Tiptap editor dependency advisories remain and need an editor major
+  version migration with editing regression tests before customer reopening.
+- Historical logs and caches might contain old key values. Restrict their access
+  and review retention on the host. Revocation, rather than deleting logs, stops
+  use of an exposed key. The original incident source was not proven.

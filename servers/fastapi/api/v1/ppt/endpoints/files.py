@@ -1,7 +1,6 @@
-from http.client import HTTPException
 import os
 from typing import Annotated, List, Optional
-from fastapi import APIRouter, Body, File, UploadFile
+from fastapi import APIRouter, Body, HTTPException, UploadFile
 
 from constants.documents import UPLOAD_ACCEPTED_FILE_TYPES
 from models.decomposed_file_info import DecomposedFileInfo
@@ -9,6 +8,7 @@ from services.temp_file_service import TEMP_FILE_SERVICE
 from services.documents_loader import DocumentsLoader
 import uuid
 from utils.validators import validate_files
+from utils.document_paths import validate_document_path
 
 FILES_ROUTER = APIRouter(prefix="/files", tags=["Files"])
 
@@ -44,6 +44,7 @@ async def decompose_files(file_paths: Annotated[List[str], Body(embed=True)]):
     txt_files = []
     other_files = []
     for file_path in file_paths:
+        file_path = validate_document_path(file_path)
         if file_path.endswith(".txt"):
             txt_files.append(file_path)
         else:
@@ -77,11 +78,5 @@ async def decompose_files(file_paths: Annotated[List[str], Body(embed=True)]):
 
 
 @FILES_ROUTER.post("/update")
-async def update_files(
-    file_path: Annotated[str, Body()],
-    file: Annotated[UploadFile, File()],
-):
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
-
-    return {"message": "File updated successfully"}
+async def update_files():
+    raise HTTPException(status_code=410, detail="File updates are disabled; upload a new document")

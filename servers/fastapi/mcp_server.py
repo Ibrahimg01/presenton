@@ -45,11 +45,11 @@ async def main():
         print("DEBUG: MCP server created from OpenAPI successfully")
 
         # Start the MCP server
-        uvicorn_config = {"reload": True}
-        print(f"DEBUG: Starting MCP server on host=0.0.0.0, port={args.port}")
+        uvicorn_config = {"reload": False, "access_log": False}
+        print(f"DEBUG: Starting MCP server on host=127.0.0.1, port={args.port}")
         await mcp.run_async(
             transport="http",
-            host="0.0.0.0",
+            host="127.0.0.1",
             port=args.port,
             uvicorn_config=uvicorn_config,
         )

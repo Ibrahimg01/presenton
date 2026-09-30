@@ -1,32 +1,33 @@
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
+from urllib.parse import urlparse
 from fastapi import Request
+import os
 
 from utils.ai_usage_tracker import (
     CALLBACK_SECRET_CONTEXT,
     CALLBACK_URL_CONTEXT,
     SITE_URL_CONTEXT,
 )
-from utils.get_env import get_can_change_keys_env
-from utils.user_config import update_env_with_user_config
-
-
-class UserConfigEnvUpdateMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if get_can_change_keys_env() != "false":
-            update_env_with_user_config()
-        return await call_next(request)
 
 
 class CallbackContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        if request.method not in {"GET", "HEAD", "OPTIONS"}:
+            origin = request.headers.get("origin")
+            try:
+                wrong_origin = bool(origin and urlparse(origin).netloc != request.headers.get("host"))
+            except ValueError:
+                wrong_origin = True
+            if wrong_origin or request.headers.get("sec-fetch-site") == "cross-site":
+                return JSONResponse({"error": "Same-origin requests required"}, status_code=403)
         callback_url_token = CALLBACK_URL_CONTEXT.set(
-            request.query_params.get("callback_url")
+            os.getenv("PRESENTON_USAGE_CALLBACK_URL")
         )
         callback_secret_token = CALLBACK_SECRET_CONTEXT.set(
-            request.query_params.get("callback_secret")
+            os.getenv("PRESENTON_USAGE_CALLBACK_SECRET")
         )
-        site_url_token = SITE_URL_CONTEXT.set(request.query_params.get("site_url"))
+        site_url_token = SITE_URL_CONTEXT.set(None)
 
         try:
             response: Response = await call_next(request)

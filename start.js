@@ -1,9 +1,8 @@
-/* This script starts the FastAPI and Next.js servers, setting up user configuration if necessary. It reads environment variables to configure API keys and other settings, ensuring that the user configuration file is created if it doesn't exist. The script also handles the starting of both servers and keeps the Node.js process alive until one of the servers exits. */
-
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
+import { provisionAuthentication } from "./security/auth-file.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,7 +13,8 @@ const nextjsDir = join(__dirname, "servers/nextjs");
 const args = process.argv.slice(2);
 const hasDevArg = args.includes("--dev") || args.includes("-d");
 const isDev = hasDevArg;
-const canChangeKeys = process.env.CAN_CHANGE_KEYS !== "false";
+// Provider credentials are server-managed in hosted deployments.
+process.env.CAN_CHANGE_KEYS = "false";
 
 const fastapiPort = 8000;
 const nextjsPort = 3000;
@@ -57,50 +57,6 @@ const setupNodeModules = () => {
 
 process.env.USER_CONFIG_PATH = userConfigPath;
 
-//? UserConfig is only setup if API Keys can be changed
-const setupUserConfigFromEnv = () => {
-  let existingConfig = {};
-
-  if (existsSync(userConfigPath)) {
-    existingConfig = JSON.parse(readFileSync(userConfigPath, "utf8"));
-  }
-
-  if (!["ollama", "openai", "google"].includes(existingConfig.LLM)) {
-    existingConfig.LLM = undefined;
-  }
-
-  const userConfig = {
-    LLM: process.env.LLM || existingConfig.LLM,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY || existingConfig.OPENAI_API_KEY,
-    OPENAI_MODEL: process.env.OPENAI_MODEL || existingConfig.OPENAI_MODEL,
-    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || existingConfig.GOOGLE_API_KEY,
-    GOOGLE_MODEL: process.env.GOOGLE_MODEL || existingConfig.GOOGLE_MODEL,
-    OLLAMA_URL: process.env.OLLAMA_URL || existingConfig.OLLAMA_URL,
-    OLLAMA_MODEL: process.env.OLLAMA_MODEL || existingConfig.OLLAMA_MODEL,
-    ANTHROPIC_API_KEY:
-      process.env.ANTHROPIC_API_KEY || existingConfig.ANTHROPIC_API_KEY,
-    ANTHROPIC_MODEL:
-      process.env.ANTHROPIC_MODEL || existingConfig.ANTHROPIC_MODEL,
-    CUSTOM_LLM_URL: process.env.CUSTOM_LLM_URL || existingConfig.CUSTOM_LLM_URL,
-    CUSTOM_LLM_API_KEY:
-      process.env.CUSTOM_LLM_API_KEY || existingConfig.CUSTOM_LLM_API_KEY,
-    CUSTOM_MODEL: process.env.CUSTOM_MODEL || existingConfig.CUSTOM_MODEL,
-    PEXELS_API_KEY: process.env.PEXELS_API_KEY || existingConfig.PEXELS_API_KEY,
-    PIXABAY_API_KEY:
-      process.env.PIXABAY_API_KEY || existingConfig.PIXABAY_API_KEY,
-    IMAGE_PROVIDER: process.env.IMAGE_PROVIDER || existingConfig.IMAGE_PROVIDER,
-    TOOL_CALLS: process.env.TOOL_CALLS || existingConfig.TOOL_CALLS,
-    DISABLE_THINKING:
-      process.env.DISABLE_THINKING || existingConfig.DISABLE_THINKING,
-    EXTENDED_REASONING:
-      process.env.EXTENDED_REASONING || existingConfig.EXTENDED_REASONING,
-    WEB_GROUNDING: process.env.WEB_GROUNDING || existingConfig.WEB_GROUNDING,
-    USE_CUSTOM_URL: process.env.USE_CUSTOM_URL || existingConfig.USE_CUSTOM_URL,
-  };
-
-  writeFileSync(userConfigPath, JSON.stringify(userConfig));
-};
-
 const startServers = async () => {
   const fastApiProcess = spawn(
     "python",
@@ -138,7 +94,7 @@ const startServers = async () => {
 
   const nextjsProcess = spawn(
     "npm",
-    ["run", isDev ? "dev" : "start", "--", "-p", nextjsPort.toString()],
+    ["run", isDev ? "dev" : "start", "--", "-p", nextjsPort.toString(), "-H", "127.0.0.1"],
     {
       cwd: nextjsDir,
       stdio: "inherit",
@@ -192,12 +148,11 @@ const startNginx = () => {
 };
 
 const main = async () => {
+  // Validate access controls before starting any listening process.
+  provisionAuthentication(process.env.PRESENTON_HTPASSWD);
+  delete process.env.PRESENTON_HTPASSWD;
   if (isDev) {
     await setupNodeModules();
-  }
-
-  if (canChangeKeys) {
-    setupUserConfigFromEnv();
   }
 
   startServers();

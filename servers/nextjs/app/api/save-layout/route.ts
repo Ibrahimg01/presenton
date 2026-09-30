@@ -17,6 +17,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const safeName = (value: unknown): value is string =>
+      typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(value);
+    if (!safeName(layout_name) || components.some((component) =>
+      !component || !safeName(component.component_name) || typeof component.component_code !== "string")) {
+      return NextResponse.json({ error: "Invalid layout or component name" }, { status: 400 });
+    }
+
     // Define the layouts directory path
     const layoutsDir = join(process.cwd(), "app_data", "layouts", layout_name);
 
