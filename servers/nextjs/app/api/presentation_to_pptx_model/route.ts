@@ -108,7 +108,7 @@ async function getBrowserAndPage(id: string, tenant: string): Promise<[Browser, 
   page.setDefaultNavigationTimeout(300000);
   page.setDefaultTimeout(300000);
   const tenantQuery = tenant ? `&tenant=${encodeURIComponent(tenant)}` : "";
-  await page.goto(`http://localhost/pdf-maker?id=${id}${tenantQuery}`, {
+  await page.goto(`http://127.0.0.1:8081/pdf-maker?id=${id}${tenantQuery}`, {
     waitUntil: "networkidle0",
     timeout: 300000,
   });

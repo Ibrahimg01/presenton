@@ -14,8 +14,9 @@ if __name__ == "__main__":
     
     uvicorn.run(
         "api.main:app",
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=args.port,
         log_level="info",
+        access_log=False,  # Gateway access logs omit query-string secrets.
         reload=reload,
     )

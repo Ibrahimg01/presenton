@@ -63,7 +63,7 @@ async function exportPdf(req: NextRequest) {
 
     const tenantQuery = `tenant=${encodeURIComponent(tenant)}`;
     const encodedId = encodeURIComponent(id);
-    await page.goto(`http://localhost/pdf-maker?id=${encodedId}&${tenantQuery}`, {
+    await page.goto(`http://127.0.0.1:8081/pdf-maker?id=${encodedId}&${tenantQuery}`, {
       waitUntil: "networkidle0",
       timeout: 300000,
     });

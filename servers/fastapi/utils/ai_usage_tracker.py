@@ -6,7 +6,7 @@ import httpx
 import logging
 from contextvars import ContextVar
 from typing import Optional
-from urllib.parse import unquote
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -121,15 +121,12 @@ async def report_usage_to_wordpress(
     Returns:
         True if successfully reported, False otherwise
     """
-    if not callback_url:
-        logger.debug("No callback URL provided, skipping usage report")
+    parsed_url = urlparse(callback_url or "")
+    if not secret or len(secret) < 32 or parsed_url.scheme != "https" or not parsed_url.hostname or parsed_url.username or parsed_url.password:
+        logger.debug("Secure server-side callback configuration is required")
         return False
 
     try:
-        # Decode URL if needed
-        if callback_url.startswith('%'):
-            callback_url = unquote(callback_url)
-
         payload = {
             "source": source,
             "tokens": tokens,
@@ -151,11 +148,11 @@ async def report_usage_to_wordpress(
                 logger.info(f"Usage reported successfully: {tokens} tokens, ${usd_cost:.6f}")
                 return True
             else:
-                logger.warning(f"Usage report failed: {response.status_code} - {response.text}")
+                logger.warning("Usage report failed: HTTP %s", response.status_code)
                 return False
 
-    except Exception as e:
-        logger.error(f"Error reporting usage to WordPress: {e}")
+    except Exception:
+        logger.error("Error reporting usage to WordPress")
         return False
 
 

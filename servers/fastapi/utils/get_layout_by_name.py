@@ -4,7 +4,7 @@ from models.presentation_layout import PresentationLayoutModel
 from typing import List
 
 async def get_layout_by_name(layout_name: str) -> PresentationLayoutModel:
-    url = f"http://localhost/api/template?group={layout_name}"
+    url = f"http://127.0.0.1:8081/api/template?group={layout_name}"
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status != 200:

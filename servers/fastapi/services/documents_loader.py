@@ -11,12 +11,13 @@ from constants.documents import (
     WORD_TYPES,
 )
 from services.docling_service import DoclingService
+from utils.document_paths import validate_document_path
 
 
 class DocumentsLoader:
 
     def __init__(self, file_paths: List[str]):
-        self._file_paths = file_paths
+        self._file_paths = [validate_document_path(p) for p in file_paths]
 
         self.docling_service = DoclingService()
 

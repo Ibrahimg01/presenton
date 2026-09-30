@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
     chromium
 
 
-# Install Node.js 20 using NodeSource repository
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+# Install Node.js 22 using NodeSource repository
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs
 
 
@@ -35,7 +35,7 @@ RUN pip install docling --extra-index-url https://download.pytorch.org/whl/cpu
 # Install dependencies for Next.js
 WORKDIR /app/servers/nextjs
 COPY servers/nextjs/package.json servers/nextjs/package-lock.json ./
-RUN npm install
+RUN npm ci
 
 
 # Copy Next.js app
@@ -56,6 +56,9 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 # Expose the port
 EXPOSE 80
+
+# Access-control initialization must ship with the entrypoint.
+COPY security/ /app/security/
 
 # Start the servers
 CMD ["node", "/app/start.js"]

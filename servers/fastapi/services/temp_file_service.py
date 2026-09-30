@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 from utils.get_env import get_temp_directory_env
 import uuid
+from pathlib import Path
 
 
 class TempFileService:
@@ -26,7 +27,15 @@ class TempFileService:
         if dir_path is None:
             dir_path = self.base_dir
 
-        full_path = os.path.join(dir_path, file_path)
+        root = Path(self.base_dir).resolve()
+        parent = Path(dir_path).resolve()
+        name = Path(file_path)
+        if not file_path or name.name != file_path or file_path in {".", ".."} or "\\" in file_path:
+            raise ValueError("Invalid temporary filename")
+        full_path = (parent / name).resolve()
+        if root not in full_path.parents:
+            raise ValueError("Temporary file must be inside the temporary directory")
+        full_path = str(full_path)
 
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         return full_path

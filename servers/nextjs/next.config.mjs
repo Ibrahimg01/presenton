@@ -1,6 +1,7 @@
 
 const nextConfig = {
   reactStrictMode: false,
+  poweredByHeader: false,
   distDir: ".next-build",
   
 
