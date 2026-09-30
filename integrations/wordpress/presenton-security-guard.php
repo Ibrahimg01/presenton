@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Presenton Security Guard
  * Description: Administrator-only Launchpad access and authenticated server-side usage reporting.
- * Version: 2.1.0
+ * Version: 2.1.1
  * Network: true
  */
 if (!defined('ABSPATH')) { exit; }
@@ -45,7 +45,7 @@ add_action('admin_menu', function () {
         }
         $url = presenton_customer_enabled() ? add_query_arg('site', get_current_blog_id(), $origin . '/auth/start') : add_query_arg('tenant', get_current_blog_id(), $origin . '/upload');
         $logo = plugins_url('studio-logo.png', __FILE__);
-        echo '<style>.presenton-studio{margin:0 0 0 -20px;background:#140035;color:#fff;min-height:calc(100vh - 32px)}.presenton-studio-header{text-align:center;padding:32px 20px}.presenton-studio-header img{width:112px;height:auto}.presenton-studio-header h1{color:#fff;font-size:32px;line-height:1.3;font-weight:700;margin:20px 0 12px}.presenton-studio-header p{color:#e9e4ff;font-size:16px}.presenton-studio iframe{display:block;width:100%;height:calc(100vh - 250px);min-height:760px;border:0;border-top:2px solid #f65c4b;background:#140035}#wpfooter{display:none}@media(max-width:782px){.presenton-studio{margin-left:-10px}.presenton-studio-header{padding:22px 12px}.presenton-studio-header h1{font-size:26px}}</style>';
+        echo '<style>.presenton-studio{margin:0 0 0 -20px;background:#140035;color:#fff;min-height:calc(100vh - 32px)}.presenton-studio-header{text-align:center;padding:32px 20px}.presenton-studio-header img{width:112px;height:auto}.presenton-studio-header h1{color:#fff!important;font-size:32px;line-height:1.3;font-weight:700;margin:20px 0 12px}.presenton-studio-header p{color:#e9e4ff;font-size:16px}.presenton-studio iframe{display:block;width:100%;height:calc(100vh - 250px);min-height:760px;border:0;border-top:2px solid #f65c4b;background:#140035}#wpfooter{display:none}@media(max-width:782px){.presenton-studio{margin-left:-10px}.presenton-studio-header{padding:22px 12px}.presenton-studio-header h1{font-size:26px}}</style>';
         echo '<section class="presenton-studio"><header class="presenton-studio-header"><img src="' . esc_url($logo) . '" alt="Information systems"><h1>Digital Launchpad Studio</h1><p>Your all-in-one studio for slides, PDFs, and fully generated digital products.</p></header><iframe id="presenton-studio-frame" title="Digital Launchpad Studio" src="' . esc_url($url) . '" allow="clipboard-write; fullscreen" referrerpolicy="no-referrer" allowfullscreen></iframe></section>';
     });
 }, PHP_INT_MAX);
