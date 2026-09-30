@@ -15,6 +15,19 @@ function presenton_login_option_name($kind, $value) { return 'presenton_' . $kin
 function presenton_identity_error() { return new WP_Error('presenton_access_denied', 'Site access denied', array('status'=>403)); }
 
 add_action('admin_post_nopriv_presenton_studio_authorize', function () {
+    // Site administrators may have a host-only login cookie on their own domain.
+    $site = isset($_GET['site']) ? absint($_GET['site']) : 0;
+    $record = $site ? get_site($site) : null;
+    $state = isset($_GET['state']) && is_string($_GET['state']) ? wp_unslash($_GET['state']) : '';
+    $challenge = isset($_GET['challenge']) && is_string($_GET['challenge']) ? wp_unslash($_GET['challenge']) : '';
+    if (!presenton_customer_enabled() || !$record || $record->deleted || $record->spam || $record->archived || !preg_match('/^[a-f0-9]{48}$/D', $state) || !preg_match('/^[A-Za-z0-9_-]{43}$/D', $challenge)) {
+        wp_die('Site access denied.', '', array('response'=>403));
+    }
+    if ((int) get_current_blog_id() !== $site) {
+        $destination = get_admin_url($site, 'admin-post.php', 'https');
+        nocache_headers(); header('Referrer-Policy: no-referrer');
+        wp_redirect(add_query_arg(array('action'=>'presenton_studio_authorize','site'=>$site,'state'=>$state,'challenge'=>$challenge), $destination), 302, 'Presenton'); exit;
+    }
     auth_redirect();
 });
 add_action('admin_post_presenton_studio_authorize', function () {
